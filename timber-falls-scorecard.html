@@ -410,10 +410,15 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 
 <!-- HEADER -->
 <div class="app-header">
-  <img class="header-logo" src="https://www.timberfallspark.com/wp-content/themes/tf-2016/img/logo-small.png" alt="Timber Falls" id="header-logo-img">
+  <!-- Timber Falls Mini Golf logo -->
+  <svg width="20" height="26" viewBox="0 0 20 26" style="flex-shrink:0" aria-hidden="true">
+    <polygon points="10,0 20,11 14,11 18,18 2,18 6,11 0,11" fill="#7ac943"/>
+    <rect x="8" y="18" width="4" height="7" rx="1" fill="#c8941a"/>
+  </svg>
   <div class="header-info">
-    <div class="header-title">Timber Falls</div>
-    <div class="header-sub" id="header-sub-text">Adventure Golf Scorecard</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:rgba(255,255,255,0.75);letter-spacing:2.5px;line-height:1">TIMBER FALLS</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f0b429;letter-spacing:0.5px;line-height:1.05">MINI GOLF</div>
+    <div class="header-sub" id="header-sub-text">Scorecard</div>
   </div>
   <button class="header-back" id="back-btn" onclick="goBack()">← Back</button>
 </div>
@@ -424,9 +429,17 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 <!-- HOME SCREEN -->
 <div id="screen-home" class="screen active">
   <div class="home-hero">
-    <span class="home-hero-icon">⛳</span>
-    <h2>Ready to Play?</h2>
-    <p>Track scores across all 54 holes</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:16px;position:relative;z-index:1">
+      <svg width="44" height="56" viewBox="0 0 20 26" aria-hidden="true">
+        <polygon points="10,0 20,11 14,11 18,18 2,18 6,11 0,11" fill="#7ac943"/>
+        <rect x="8" y="18" width="4" height="7" rx="1" fill="#c8941a"/>
+      </svg>
+      <div style="text-align:left">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:rgba(255,255,255,0.8);letter-spacing:4px;line-height:1">TIMBER FALLS</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:#f0b429;letter-spacing:1px;line-height:0.95">MINI GOLF</div>
+      </div>
+    </div>
+    <p>Score tracker · Three courses · 54 holes</p>
   </div>
   <!-- Resume in-progress game banner -->
   <div class="resume-banner" id="resume-banner">
@@ -444,14 +457,6 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
       <div class="home-card-text">
         <h3>Start a New Round</h3>
         <p>Set up players, pick a course, and get a group join code</p>
-      </div>
-      <div class="home-card-arrow">›</div>
-    </div>
-    <div class="home-card secondary" onclick="showScreen('screen-join')">
-      <div class="home-card-icon">🔗</div>
-      <div class="home-card-text">
-        <h3>Join a Group</h3>
-        <p>Enter a 4-letter code to join your group's scorecard</p>
       </div>
       <div class="home-card-arrow">›</div>
     </div>
@@ -660,10 +665,12 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 const COLORS = ['#1e4d2b','#c8941a','#1a5fa8','#b91c1c','#7c3aed','#0891b2'];
 let _pid = Date.now(); // monotonic player ID counter — never collides even when called rapidly
 function nextPid() { return ++_pid; }
+// Par values from the physical scorecards on-site
+// Blue (Minder's Hollow) total=42, Red (Logger's Lookout) total=43, Black (Tall Timbers) total=42
 const COURSE_PARS = {
-  blue: [3,3,2,3,3,4,3,2,4,3,3,3,2,4,3,3,3,3],
-  red:  [3,3,3,2,4,3,3,2,3,3,3,4,3,3,2,3,4,3],
-  black:[4,3,3,3,2,3,4,3,3,2,4,3,3,3,3,4,2,3],
+  blue:  [2,3,3,2,2,2,3,2,3, 2,2,2,3,2,3,2,2,2],
+  red:   [2,2,3,2,3,2,3,2,2, 2,2,3,2,2,3,3,3,2],
+  black: [2,2,2,2,3,3,2,2,2, 2,2,3,3,2,3,2,3,2],
 };
 const COURSE_NAMES = {blue:"Minder's Hollow", red:"Logger's Lookout", black:"Tall Timbers"};
 const COURSE_HDR   = {blue:'blue-hdr', red:'red-hdr', black:'black-hdr'};
@@ -672,8 +679,7 @@ const STROKE_LIMIT = 6;
 // ---- STATE ----
 let state = {
   course: null, players: [], scores: {}, obFlags: {},
-  currentHole: 0, code: '', role: 'host',
-  myName: '', myId: null, gameCode: '',
+  currentHole: 0, role: 'host',
 };
 
 // ---- SHARED GAME STATE (localStorage + storage events) ----
@@ -837,37 +843,8 @@ function startRound() {
   });
   state.currentHole = 0;
   state.role = 'host';
-  state.code = Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)]).join('');
 
-  cleanOldGames();
-  saveGame(state.code, {
-    code: state.code, course: state.course,
-    players: state.players.map(p => ({...p, photo: null})), // don't store photos in localStorage
-    started: false, createdAt: Date.now(),
-  });
-
-  window.addEventListener('storage', onHostStorageEvent);
-
-  document.getElementById('display-code').textContent = state.code;
-  document.getElementById('display-code').parentElement.onclick = () => {
-    navigator.clipboard?.writeText(state.code).then(() => showToast('Code copied!'));
-  };
-
-  renderJoinedList();
-  showScreen('screen-waiting');
-
-  // QR code pointing to this page with ?join=CODE
-  setTimeout(() => {
-    const qrEl = document.getElementById('qr-canvas');
-    qrEl.innerHTML = '';
-    try {
-      new QRCode(qrEl, {
-        text: window.location.href.split('?')[0] + '?join=' + state.code,
-        width: 130, height: 130,
-        colorDark: '#1e4d2b', colorLight: '#ffffff',
-      });
-    } catch(e) {}
-  }, 150);
+  beginScoring();
 }
 
 function onHostStorageEvent(e) {
@@ -1446,7 +1423,6 @@ function renderLeaderboard() {
 }
 
 // ---- INIT ----
-document.getElementById('header-logo-img').onerror = function() { this.style.display='none'; };
 initSetup();
 checkResumeGame();
 updateLbHomeSubtitle();
