@@ -1002,6 +1002,30 @@ function initSetup() {
   renderPlayers();
 }
 
+// ---- SHARED GAME STATE (localStorage + storage events for cross-tab sync) ----
+const LS_PREFIX = 'tf-game-';
+
+function saveGame(code, data) {
+  try { localStorage.setItem(LS_PREFIX + code, JSON.stringify(data)); } catch(e) {}
+}
+function loadGame(code) {
+  try { return JSON.parse(localStorage.getItem(LS_PREFIX + code)); } catch(e) { return null; }
+}
+function removeGame(code) {
+  try { localStorage.removeItem(LS_PREFIX + code); } catch(e) {}
+}
+
+// Remove games older than 6 hours to avoid localStorage buildup
+function cleanOldGames() {
+  try {
+    const cutoff = Date.now() - 6 * 60 * 60 * 1000;
+    Object.keys(localStorage).filter(k => k.startsWith(LS_PREFIX)).forEach(k => {
+      const d = JSON.parse(localStorage.getItem(k));
+      if (d && d.createdAt < cutoff) localStorage.removeItem(k);
+    });
+  } catch(e) {}
+}
+
 // ---- START ROUND ----
 function startRound() {
   if (!state.course) { showToast('Please choose a course'); return; }
@@ -1021,13 +1045,41 @@ function startRound() {
   // Generate code
   state.code = Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)]).join('');
 
-  // Show waiting
+  cleanOldGames();
+
+  // Persist game so joiners can find it
+  saveGame(state.code, {
+    code: state.code,
+    course: state.course,
+    players: state.players,
+    started: false,
+    createdAt: Date.now(),
+  });
+
+  // Listen for players joining from other tabs via the storage event
+  window.addEventListener('storage', onHostStorageEvent);
+
   document.getElementById('display-code').textContent = state.code;
   document.getElementById('display-code').parentElement.onclick = () => {
     navigator.clipboard?.writeText(state.code).then(() => showToast('Code copied!'));
   };
   renderJoinedList();
   showScreen('screen-waiting');
+}
+
+function onHostStorageEvent(e) {
+  if (e.key !== LS_PREFIX + state.code) return;
+  const data = loadGame(state.code);
+  if (!data) return;
+  // Sync any newly joined players into local state
+  data.players.forEach(p => {
+    if (!state.players.find(sp => sp.id === p.id)) {
+      state.players.push(p);
+      state.scores[p.id] = new Array(18).fill(null);
+      showToast(p.name + ' joined!');
+    }
+  });
+  renderJoinedList();
 }
 
 function renderJoinedList() {
@@ -1048,26 +1100,54 @@ function joinGroup() {
   if (!name) { showToast('Enter your name'); return; }
   if (code.length !== 4) { showToast('Enter a 4-letter code'); return; }
 
-  state.myName = name;
-  state.gameCode = code;
-  state.role = 'viewer';
+  const gameData = loadGame(code);
+  if (!gameData) {
+    showToast('Code not found — check with your host');
+    return;
+  }
+  if (gameData.started) {
+    showToast('That round has already started');
+    return;
+  }
 
-  const newPlayer = {id: Date.now(), name, color: COLORS[state.players.length % COLORS.length]};
-  state.players.push(newPlayer);
-  state.scores[newPlayer.id] = new Array(18).fill(null);
+  const newPlayer = {id: Date.now(), name, color: COLORS[gameData.players.length % COLORS.length]};
+  gameData.players.push(newPlayer);
+  saveGame(code, gameData);  // triggers storage event in the host's tab
+
+  state.myName = name;
+  state.myId = newPlayer.id;
+  state.gameCode = code;
+  state.course = gameData.course;
+  state.role = 'viewer';
 
   document.getElementById('joiner-display-code').textContent = code;
   showScreen('screen-joined-wait');
 
-  // Simulate host starting after 2s (demo)
-  setTimeout(() => {
-    if (!state.course) { state.course = 'blue'; }
-    beginScoring();
-  }, 2000);
+  // Listen for the host marking the game as started
+  window.addEventListener('storage', onJoinerStorageEvent);
+}
+
+function onJoinerStorageEvent(e) {
+  if (e.key !== LS_PREFIX + state.gameCode) return;
+  const data = loadGame(state.gameCode);
+  if (!data || !data.started) return;
+  window.removeEventListener('storage', onJoinerStorageEvent);
+  state.players = data.players;
+  state.scores = {};
+  data.players.forEach(p => { state.scores[p.id] = new Array(18).fill(null); });
+  beginScoring();
 }
 
 // ---- BEGIN SCORING ----
 function beginScoring() {
+  if (state.role === 'host') {
+    window.removeEventListener('storage', onHostStorageEvent);
+    // Signal all joiners that the game has started
+    const gameData = loadGame(state.code) || {};
+    gameData.started = true;
+    gameData.players = state.players;
+    saveGame(state.code, gameData);
+  }
   renderScoringHole();
   showScreen('screen-scoring');
   updateHeader('screen-scoring');
