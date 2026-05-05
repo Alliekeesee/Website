@@ -328,6 +328,45 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:all 0.3s;z-index:998;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* RESUME BANNER */
+.resume-banner{display:none;margin:0 20px 12px;background:var(--gold);border-radius:var(--radius-sm);padding:14px 16px;box-shadow:0 2px 8px rgba(200,148,26,0.3)}
+.resume-banner.visible{display:block}
+.resume-banner-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:2px}
+.resume-banner-sub{font-size:11px;color:rgba(255,255,255,0.8);font-weight:600;margin-bottom:10px}
+.resume-banner-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.resume-btn-yes{padding:8px;border:none;border-radius:8px;background:#fff;color:var(--gold);font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer}
+.resume-btn-no{padding:8px;border:none;border-radius:8px;background:rgba(0,0,0,0.15);color:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer}
+
+/* LEADERBOARD SCREEN */
+.lb-screen-hero{background:var(--green);padding:20px 20px 28px;position:relative}
+.lb-screen-hero::after{content:'';position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);width:120%;height:32px;background:var(--cream);border-radius:50%}
+.lb-screen-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;letter-spacing:1px;margin-bottom:2px}
+.lb-week-label{font-size:12px;color:rgba(255,255,255,0.7);font-weight:700}
+.lb-filter-row{display:flex;gap:6px;padding:24px 20px 12px;overflow-x:auto;scrollbar-width:none}
+.lb-filter-row::-webkit-scrollbar{display:none}
+.lb-filter-btn{padding:7px 16px;border-radius:20px;border:2px solid var(--cream-dark);background:var(--white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--gray);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.lb-filter-btn.active{border-color:var(--green);background:var(--green);color:#fff}
+.lb-entries{padding:0 20px 20px}
+.lb-entry{display:flex;align-items:center;gap:12px;background:var(--white);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px solid transparent}
+.lb-entry.top1{border-color:var(--gold-light);background:#fffbeb}
+.lb-entry.top2{border-color:#c0c0c0}
+.lb-entry.top3{border-color:#a16207}
+.lb-entry-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;background:var(--cream-dark);color:var(--gray)}
+.lb-entry-rank.r1{background:var(--gold-light);color:#fff}
+.lb-entry-rank.r2{background:#a1a1aa;color:#fff}
+.lb-entry-rank.r3{background:#a16207;color:#fff}
+.lb-entry-info{flex:1;min-width:0}
+.lb-entry-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-entry-meta{font-size:11px;color:var(--gray);font-weight:600;margin-top:1px}
+.lb-entry-score{text-align:right;flex-shrink:0}
+.lb-entry-diff{font-size:18px;font-weight:900}
+.lb-entry-diff.under{color:var(--green)}.lb-entry-diff.over{color:#b91c1c}.lb-entry-diff.even{color:var(--gray)}
+.lb-entry-strokes{font-size:11px;color:var(--gray);font-weight:600;margin-top:1px}
+.lb-empty{text-align:center;padding:40px 20px;color:var(--gray)}
+.lb-empty-icon{font-size:40px;margin-bottom:10px}
+.lb-empty-title{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.lb-empty-sub{font-size:13px;font-weight:600}
+
 /* UTILITY */
 .text-center{text-align:center}
 .text-muted{color:var(--gray);font-size:13px;font-weight:600}
@@ -389,7 +428,17 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
     <h2>Ready to Play?</h2>
     <p>Track scores across all 54 holes</p>
   </div>
-  <div class="home-actions">
+  <!-- Resume in-progress game banner -->
+  <div class="resume-banner" id="resume-banner">
+    <div class="resume-banner-title">⛳ Resume Your Round?</div>
+    <div class="resume-banner-sub" id="resume-banner-sub">You have an unfinished round</div>
+    <div class="resume-banner-btns">
+      <button class="resume-btn-yes" onclick="resumeGame()">▶ Resume</button>
+      <button class="resume-btn-no" onclick="discardResume()">✕ Discard</button>
+    </div>
+  </div>
+
+  <div class="home-actions" style="padding-top:16px">
     <div class="home-card primary" onclick="showScreen('screen-setup')">
       <div class="home-card-icon">🏌️</div>
       <div class="home-card-text">
@@ -407,6 +456,16 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
       <div class="home-card-arrow">›</div>
     </div>
   </div>
+  <!-- Weekly leaderboard shortcut -->
+  <div class="home-card" style="margin:0 20px 14px;border-color:var(--green-mid);cursor:pointer" onclick="showLeaderboard()">
+    <div class="home-card-icon" style="background:#145a1e">🏆</div>
+    <div class="home-card-text">
+      <h3>This Week's Best</h3>
+      <p id="lb-home-sub">See the top scores from this week</p>
+    </div>
+    <div class="home-card-arrow">›</div>
+  </div>
+
   <div class="courses-preview">
     <h4>🌲 The Three Courses</h4>
     <div class="course-pill" style="background:#eef4fc">
@@ -576,11 +635,31 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
   </div>
 </div>
 
+<!-- LEADERBOARD SCREEN -->
+<div id="screen-leaderboard" class="screen">
+  <div class="lb-screen-hero">
+    <div class="lb-screen-title">🏆 This Week's Best</div>
+    <div class="lb-week-label" id="lb-week-label"></div>
+  </div>
+  <div class="lb-filter-row" id="lb-filter-row">
+    <button class="lb-filter-btn active" onclick="setLbFilter('all',this)">All Courses</button>
+    <button class="lb-filter-btn" onclick="setLbFilter('blue',this)" style="color:var(--blue-course)">🌊 Minder's Hollow</button>
+    <button class="lb-filter-btn" onclick="setLbFilter('red',this)" style="color:var(--red-course)">🌲 Logger's Lookout</button>
+    <button class="lb-filter-btn" onclick="setLbFilter('black',this)" style="color:var(--black-course)">🦅 Tall Timbers</button>
+  </div>
+  <div class="lb-entries" id="lb-entries"></div>
+  <div style="padding:0 20px 20px">
+    <button class="btn btn-outline" onclick="goBack()">← Back</button>
+  </div>
+</div>
+
 </div><!-- end scroll-area -->
 
 <script>
 // ---- CONSTANTS ----
 const COLORS = ['#1e4d2b','#c8941a','#1a5fa8','#b91c1c','#7c3aed','#0891b2'];
+let _pid = Date.now(); // monotonic player ID counter — never collides even when called rapidly
+function nextPid() { return ++_pid; }
 const COURSE_PARS = {
   blue: [3,3,2,3,3,4,3,2,4,3,3,3,2,4,3,3,3,3],
   red:  [3,3,3,2,4,3,3,2,3,3,3,4,3,3,2,3,4,3],
@@ -636,7 +715,7 @@ function goBack() {
 function updateHeader(screenId) {
   const backBtn = document.getElementById('back-btn');
   const sub = document.getElementById('header-sub-text');
-  const noBack = ['screen-home','screen-results'];
+  const noBack = ['screen-home','screen-results','screen-leaderboard'];
   backBtn.classList.toggle('visible', !noBack.includes(screenId));
   const labels = {
     'screen-home':'Adventure Golf Scorecard','screen-setup':'New Round Setup',
@@ -644,6 +723,7 @@ function updateHeader(screenId) {
     'screen-joined-wait':'Waiting for Host',
     'screen-scoring': state.course ? COURSE_NAMES[state.course] : 'Scoring',
     'screen-scorecard':'Scorecard','screen-results':'Results',
+    'screen-leaderboard':'Weekly Leaderboard',
   };
   sub.textContent = labels[screenId] || 'Adventure Golf';
 }
@@ -671,7 +751,7 @@ function avatarHTML(p, size=34, fontSize=13) {
 // ---- PLAYER MANAGEMENT ----
 function addPlayer() {
   if (state.players.length >= 4) { showToast('Max 4 players per the course rules'); return; }
-  const id = Date.now();
+  const id = nextPid();
   state.players.push({id, name:'', color: COLORS[state.players.length], photo: null});
   renderPlayers();
 }
@@ -955,6 +1035,7 @@ function changeScore(pid, hole, delta) {
     state.scores[pid][hole] = Math.max(1, Math.min(STROKE_LIMIT, cur + delta));
   }
   if (state.scores[pid][hole] === 1) showToast('🏆 Hole in ONE! Amazing!');
+  saveResumeState();
   renderScoringHole();
 }
 
@@ -966,6 +1047,7 @@ function applyOB(pid, hole) {
   state.obFlags[pid][hole] = true;
   const atLimit = state.scores[pid][hole] >= STROKE_LIMIT;
   showToast(atLimit ? '⛳ OB — stroke limit reached!' : '⛳ Out of bounds! +1 penalty stroke');
+  saveResumeState();
   renderScoringHole();
 }
 
@@ -1034,6 +1116,7 @@ function renderScorecardTable(containerId) {
 
 // ---- FINISH ROUND ----
 function finishRound() {
+  clearResumeState();
   const courseName = COURSE_NAMES[state.course];
   document.getElementById('results-course-name').textContent =
     `${courseName} · ${state.course.charAt(0).toUpperCase()+state.course.slice(1)} Course`;
@@ -1046,6 +1129,8 @@ function finishRound() {
     const parTot = pars.reduce((a,b)=>a+b,0);
     return {p, total, diff: total - parTot};
   }).sort((a,b) => a.diff - b.diff);
+
+  saveToLeaderboard(totals);
 
   const medals   = ['🥇','🥈','🥉'];
   const pClasses = ['first','second','third'];
@@ -1172,15 +1257,199 @@ function showToast(msg) {
 }
 
 function playAgain() {
+  clearResumeState();
   state = {course:null,players:[],scores:{},obFlags:{},currentHole:0,code:'',role:'host',myName:'',myId:null,gameCode:''};
   initSetup();
   screenHistory = ['screen-home','screen-setup'];
   showScreen('screen-setup', false);
 }
 
+// ---- RESUME STATE ----
+const LS_RESUME = 'tf-resume-game';
+
+function saveResumeState() {
+  try {
+    localStorage.setItem(LS_RESUME, JSON.stringify({
+      course: state.course,
+      players: state.players,
+      scores: state.scores,
+      obFlags: state.obFlags,
+      currentHole: state.currentHole,
+      savedAt: Date.now(),
+    }));
+  } catch(e) {}
+}
+
+function clearResumeState() {
+  try { localStorage.removeItem(LS_RESUME); } catch(e) {}
+}
+
+function checkResumeGame() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_RESUME));
+    if (!saved || !saved.course || !saved.players || saved.players.length === 0) return;
+    // Only offer resume if saved within last 24 hours
+    if (Date.now() - saved.savedAt > 24 * 60 * 60 * 1000) { clearResumeState(); return; }
+    const courseName = COURSE_NAMES[saved.course] || saved.course;
+    const thru = saved.players[0] ? saved.scores[saved.players[0].id].filter(s=>s!==null).length : 0;
+    document.getElementById('resume-banner-sub').textContent =
+      `${courseName} · Hole ${saved.currentHole + 1} · ${saved.players.length} player${saved.players.length>1?'s':''}`;
+    document.getElementById('resume-banner').classList.add('visible');
+  } catch(e) {}
+}
+
+function resumeGame() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_RESUME));
+    if (!saved) return;
+    state.course      = saved.course;
+    state.players     = saved.players;
+    state.scores      = saved.scores;
+    state.obFlags     = saved.obFlags;
+    state.currentHole = saved.currentHole;
+    state.role        = 'host';
+    document.getElementById('resume-banner').classList.remove('visible');
+    beginScoring();
+  } catch(e) { showToast('Could not restore round'); }
+}
+
+function discardResume() {
+  clearResumeState();
+  document.getElementById('resume-banner').classList.remove('visible');
+}
+
+// ---- WEEKLY LEADERBOARD ----
+const LS_LB = 'tf-leaderboard';
+
+function getWeekKey(ts) {
+  const d = new Date(ts);
+  const day = d.getDay();
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + diffToMon);
+  mon.setHours(0, 0, 0, 0);
+  return mon.toISOString().slice(0, 10);
+}
+
+function weekDisplayLabel(key) {
+  const mon = new Date(key + 'T00:00:00');
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  return `${fmt(mon)} – ${fmt(sun)}, ${sun.getFullYear()}`;
+}
+
+function saveToLeaderboard(totals) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(LS_LB) || '[]');
+    const now = Date.now();
+    const weekKey = getWeekKey(now);
+    const pars = COURSE_PARS[state.course];
+    const parTotal = pars.reduce((a,b)=>a+b,0);
+    totals.forEach(t => {
+      existing.push({
+        name: t.p.name,
+        photo: t.p.photo || null,
+        course: state.course,
+        courseName: COURSE_NAMES[state.course],
+        total: t.total,
+        par: parTotal,
+        diff: t.diff,
+        completedAt: now,
+        weekKey,
+      });
+    });
+    // Keep entries from last 8 weeks only
+    const cutoff = getWeekKey(Date.now() - 56 * 24 * 60 * 60 * 1000);
+    const pruned = existing.filter(e => e.weekKey >= cutoff);
+    localStorage.setItem(LS_LB, JSON.stringify(pruned));
+  } catch(e) {}
+  updateLbHomeSubtitle();
+}
+
+function updateLbHomeSubtitle() {
+  try {
+    const entries = JSON.parse(localStorage.getItem(LS_LB) || '[]');
+    const wk = getWeekKey(Date.now());
+    const thisWeek = entries.filter(e => e.weekKey === wk);
+    const el = document.getElementById('lb-home-sub');
+    if (!el) return;
+    el.textContent = thisWeek.length === 0
+      ? 'No scores recorded yet this week'
+      : `${thisWeek.length} score${thisWeek.length>1?'s':''} this week — best: ${formatDiff(Math.min(...thisWeek.map(e=>e.diff)))}`;
+  } catch(e) {}
+}
+
+function formatDiff(diff) {
+  return diff === 0 ? 'Even par' : (diff < 0 ? diff+' under par' : '+'+diff+' over par');
+}
+
+let lbFilter = 'all';
+
+function showLeaderboard() {
+  lbFilter = 'all';
+  document.querySelectorAll('.lb-filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  renderLeaderboard();
+  showScreen('screen-leaderboard');
+}
+
+function setLbFilter(filter, btn) {
+  lbFilter = filter;
+  document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const wk = getWeekKey(Date.now());
+  document.getElementById('lb-week-label').textContent = weekDisplayLabel(wk);
+  try {
+    let entries = JSON.parse(localStorage.getItem(LS_LB) || '[]')
+      .filter(e => e.weekKey === wk);
+    if (lbFilter !== 'all') entries = entries.filter(e => e.course === lbFilter);
+    entries.sort((a,b) => a.diff - b.diff || a.total - b.total);
+
+    const container = document.getElementById('lb-entries');
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="lb-empty">
+        <div class="lb-empty-icon">⛳</div>
+        <div class="lb-empty-title">No scores this week yet</div>
+        <div class="lb-empty-sub">Complete a round to appear on the leaderboard!</div>
+      </div>`;
+      return;
+    }
+    const rankCls  = ['r1','r2','r3'];
+    const entryCls = ['top1','top2','top3'];
+    container.innerHTML = entries.map((e, i) => {
+      const diffStr = e.diff === 0 ? 'E' : (e.diff > 0 ? '+'+e.diff : e.diff);
+      const diffCls = e.diff < 0 ? 'under' : e.diff > 0 ? 'over' : 'even';
+      const dateStr = new Date(e.completedAt).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const avatarStr = e.photo
+        ? `<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid var(--green)"><img src="${e.photo}" style="width:100%;height:100%;object-fit:cover"></div>`
+        : `<div style="width:42px;height:42px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">${e.name?e.name[0].toUpperCase():'?'}</div>`;
+      return `<div class="lb-entry ${entryCls[i]||''}">
+        <div class="lb-entry-rank ${rankCls[i]||''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</div>
+        ${avatarStr}
+        <div class="lb-entry-info">
+          <div class="lb-entry-name">${e.name}</div>
+          <div class="lb-entry-meta">${e.courseName} · ${dateStr}</div>
+        </div>
+        <div class="lb-entry-score">
+          <div class="lb-entry-diff ${diffCls}">${diffStr}</div>
+          <div class="lb-entry-strokes">${e.total} strokes</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    document.getElementById('lb-entries').innerHTML = '<div class="lb-empty"><div class="lb-empty-sub">Could not load scores.</div></div>';
+  }
+}
+
 // ---- INIT ----
 document.getElementById('header-logo-img').onerror = function() { this.style.display='none'; };
 initSetup();
+checkResumeGame();
+updateLbHomeSubtitle();
 
 // Auto-fill join code from QR scan (?join=XXXX)
 const urlJoin = new URLSearchParams(window.location.search).get('join');
