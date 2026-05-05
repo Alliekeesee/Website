@@ -465,7 +465,7 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
       <div class="home-card-icon">🏌️</div>
       <div class="home-card-text">
         <h3>Start a New Round</h3>
-        <p>Set up players, pick a course, and get a group join code</p>
+        <p>Set up players, pick a course, and start scoring</p>
       </div>
       <div class="home-card-arrow">›</div>
     </div>
@@ -1025,7 +1025,10 @@ function renderScoringHole() {
             <div class="score-controls">
               ${indicator}
               <button class="score-minus" onclick="changeScore(${p.id},${hole},-1)" ${score===null||score<=1?'disabled style="opacity:0.3"':''}>−</button>
-              <div class="score-val" style="${atLimit?'color:#b91c1c':''}">${score !== null ? score : '−'}</div>
+              <div style="display:flex;flex-direction:column;align-items:center;min-width:36px">
+                <div class="score-val" style="${atLimit?'color:#b91c1c':''}">${score !== null ? score : '−'}</div>
+                <div style="font-size:9px;color:var(--gray);font-weight:700;letter-spacing:0.5px;line-height:1;margin-top:1px">${score !== null ? 'strokes' : 'tap +'}</div>
+              </div>
               <button class="score-plus" onclick="changeScore(${p.id},${hole},1)" ${atLimit?'disabled style="opacity:0.3"':''}>+</button>
             </div>
           </div>
@@ -1055,10 +1058,8 @@ function getIndicator(score, par) {
 
 function changeScore(pid, hole, delta) {
   const cur = state.scores[pid][hole];
-  if (cur === null && delta < 0) {
-    state.scores[pid][hole] = Math.max(1, COURSE_PARS[state.course][hole] - 1);
-  } else if (cur === null) {
-    state.scores[pid][hole] = COURSE_PARS[state.course][hole];
+  if (cur === null) {
+    state.scores[pid][hole] = Math.max(1, 1 + (delta > 0 ? delta - 1 : 0));
   } else {
     state.scores[pid][hole] = Math.max(1, Math.min(STROKE_LIMIT, cur + delta));
   }
@@ -1152,10 +1153,10 @@ function finishRound() {
   const totals = state.players.map(p => {
     const pars   = COURSE_PARS[state.course];
     const scores = state.scores[p.id];
-    const filled = scores.map((s,i) => s !== null ? s : pars[i]);
-    const total  = filled.reduce((a,b)=>a+b,0);
-    const parTot = pars.reduce((a,b)=>a+b,0);
-    return {p, total, diff: total - parTot};
+    const played = scores.reduce((acc, s, i) => s !== null ? [...acc, {s, par: pars[i]}] : acc, []);
+    const total  = played.reduce((a, h) => a + h.s, 0);
+    const parTot = played.reduce((a, h) => a + h.par, 0);
+    return {p, total, thru: played.length, diff: total - parTot};
   }).sort((a,b) => a.diff - b.diff);
 
   saveToLeaderboard(totals);
