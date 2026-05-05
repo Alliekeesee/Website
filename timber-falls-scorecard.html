@@ -159,6 +159,8 @@ body{
 .cam-badge{position:absolute;bottom:-2px;right:-2px;background:var(--gold);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:8px;border:1.5px solid #fff;pointer-events:none}
 .player-input-wrap{flex:1}
 .player-input{border:none;outline:none;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;background:transparent;width:100%;color:var(--text)}
+.player-age-input{border:none;outline:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;background:transparent;width:100%;color:var(--gray);margin-top:2px}
+.player-age-input::placeholder{color:#c9bfaf}
 .remove-player{background:none;border:none;color:#ccc;font-size:22px;cursor:pointer;padding:4px;line-height:1;transition:color 0.15s}
 .remove-player:hover{color:#b91c1c}
 
@@ -346,6 +348,13 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 .lb-filter-row::-webkit-scrollbar{display:none}
 .lb-filter-btn{padding:7px 16px;border-radius:20px;border:2px solid var(--cream-dark);background:var(--white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--gray);cursor:pointer;white-space:nowrap;flex-shrink:0}
 .lb-filter-btn.active{border-color:var(--green);background:var(--green);color:#fff}
+.lb-age-row{display:flex;gap:6px;padding:0 20px 12px;overflow-x:auto;scrollbar-width:none}
+.lb-age-row::-webkit-scrollbar{display:none}
+.lb-age-btn{padding:6px 14px;border-radius:20px;border:2px solid var(--cream-dark);background:var(--white);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--gray);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.lb-age-btn.active{border-color:var(--gold);background:var(--gold);color:#fff}
+.lb-group-header{display:flex;align-items:center;gap:8px;padding:12px 0 8px;margin-top:4px}
+.lb-group-title{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--green);letter-spacing:1px}
+.lb-group-line{flex:1;height:2px;background:var(--cream-dark);border-radius:1px}
 .lb-entries{padding:0 20px 20px}
 .lb-entry{display:flex;align-items:center;gap:12px;background:var(--white);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px solid transparent}
 .lb-entry.top1{border-color:var(--gold-light);background:#fffbeb}
@@ -646,11 +655,17 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
     <div class="lb-screen-title">🏆 This Week's Best</div>
     <div class="lb-week-label" id="lb-week-label"></div>
   </div>
-  <div class="lb-filter-row" id="lb-filter-row">
-    <button class="lb-filter-btn active" onclick="setLbFilter('all',this)">All Courses</button>
-    <button class="lb-filter-btn" onclick="setLbFilter('blue',this)" style="color:var(--blue-course)">🌊 Minder's Hollow</button>
-    <button class="lb-filter-btn" onclick="setLbFilter('red',this)" style="color:var(--red-course)">🌲 Logger's Lookout</button>
-    <button class="lb-filter-btn" onclick="setLbFilter('black',this)" style="color:var(--black-course)">🦅 Tall Timbers</button>
+  <div class="lb-filter-row">
+    <button class="lb-filter-btn active" onclick="setLbCourse('all',this)">All Courses</button>
+    <button class="lb-filter-btn" onclick="setLbCourse('blue',this)" style="color:var(--blue-course)">🌊 Blue</button>
+    <button class="lb-filter-btn" onclick="setLbCourse('red',this)" style="color:var(--red-course)">🌲 Red</button>
+    <button class="lb-filter-btn" onclick="setLbCourse('black',this)" style="color:var(--black-course)">🦅 Black</button>
+  </div>
+  <div class="lb-age-row">
+    <button class="lb-age-btn active" onclick="setLbAge('all',this)">All Ages</button>
+    <button class="lb-age-btn" onclick="setLbAge('kids',this)">🧒 Kids (12 &amp; under)</button>
+    <button class="lb-age-btn" onclick="setLbAge('teens',this)">🧑 Teens (13–17)</button>
+    <button class="lb-age-btn" onclick="setLbAge('adults',this)">🧑‍💼 Adults (18+)</button>
   </div>
   <div class="lb-entries" id="lb-entries"></div>
   <div style="padding:0 20px 20px">
@@ -758,7 +773,7 @@ function avatarHTML(p, size=34, fontSize=13) {
 function addPlayer() {
   if (state.players.length >= 4) { showToast('Max 4 players per the course rules'); return; }
   const id = nextPid();
-  state.players.push({id, name:'', color: COLORS[state.players.length], photo: null});
+  state.players.push({id, name:'', color: COLORS[state.players.length], photo: null, age: null});
   renderPlayers();
 }
 
@@ -782,6 +797,8 @@ function renderPlayers() {
       <div class="player-input-wrap">
         <input class="player-input" placeholder="Player ${i+1} name" value="${p.name}"
           oninput="updatePlayerName(${p.id}, this.value)">
+        <input class="player-age-input" type="number" min="1" max="99" placeholder="Age (optional)"
+          value="${p.age||''}" oninput="updatePlayerAge(${p.id}, this.value)">
       </div>
       ${state.players.length > 1 ? `<button class="remove-player" onclick="removePlayer(${p.id})">×</button>` : ''}
     </div>
@@ -809,12 +826,46 @@ function handlePlayerPhoto(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const p = state.players.find(p => p.id === playerId);
-    if (p) { p.photo = e.target.result; renderPlayers(); }
+    // Resize to 180px before storing so localStorage stays small
+    resizePhoto(e.target.result, 180, 0.75, resized => {
+      const p = state.players.find(p => p.id === playerId);
+      if (p) { p.photo = resized; renderPlayers(); }
+    });
   };
   reader.readAsDataURL(file);
   input.value = '';
 }
+
+function resizePhoto(dataUrl, maxDim, quality, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width  * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
+}
+
+function updatePlayerAge(id, val) {
+  const p = state.players.find(p => p.id === id);
+  if (p) p.age = val ? parseInt(val) : null;
+}
+
+function getAgeGroup(age) {
+  if (!age || isNaN(age)) return 'adults';
+  if (age <= 12) return 'kids';
+  if (age <= 17) return 'teens';
+  return 'adults';
+}
+
+const AGE_GROUP_LABELS = {
+  kids:   '🧒 Kids (12 & under)',
+  teens:  '🧑 Teens (13–17)',
+  adults: '🧑‍💼 Adults (18+)',
+};
 
 // ---- INIT SETUP ----
 function initSetup() {
@@ -1326,7 +1377,9 @@ function saveToLeaderboard(totals) {
     totals.forEach(t => {
       existing.push({
         name: t.p.name,
-        photo: t.p.photo || null,
+        photo: t.p.photo || null,   // already resized to ~180px on upload
+        age: t.p.age || null,
+        ageGroup: getAgeGroup(t.p.age),
         course: state.course,
         courseName: COURSE_NAMES[state.course],
         total: t.total,
@@ -1361,20 +1414,60 @@ function formatDiff(diff) {
   return diff === 0 ? 'Even par' : (diff < 0 ? diff+' under par' : '+'+diff+' over par');
 }
 
-let lbFilter = 'all';
+let lbCourseFilter = 'all';
+let lbAgeFilter = 'all';
 
 function showLeaderboard() {
-  lbFilter = 'all';
+  lbCourseFilter = 'all';
+  lbAgeFilter = 'all';
   document.querySelectorAll('.lb-filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('.lb-age-btn').forEach((b,i) => b.classList.toggle('active', i===0));
   renderLeaderboard();
   showScreen('screen-leaderboard');
 }
 
-function setLbFilter(filter, btn) {
-  lbFilter = filter;
+function setLbCourse(filter, btn) {
+  lbCourseFilter = filter;
   document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderLeaderboard();
+}
+
+function setLbAge(filter, btn) {
+  lbAgeFilter = filter;
+  document.querySelectorAll('.lb-age-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard();
+}
+
+function renderLbEntries(entries, startRank) {
+  if (entries.length === 0) return '';
+  const medals = ['🥇','🥈','🥉'];
+  const entryCls = ['top1','top2','top3'];
+  return entries.map((e, i) => {
+    const rank = startRank + i;
+    const diffStr = e.diff === 0 ? 'E' : (e.diff > 0 ? '+'+e.diff : e.diff);
+    const diffCls = e.diff < 0 ? 'under' : e.diff > 0 ? 'over' : 'even';
+    const dateStr = new Date(e.completedAt).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const avatarStr = e.photo
+      ? `<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid var(--green)"><img src="${e.photo}" style="width:100%;height:100%;object-fit:cover"></div>`
+      : `<div style="width:42px;height:42px;border-radius:50%;background:${COLORS[rank%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">${e.name?e.name[0].toUpperCase():'?'}</div>`;
+    const rankDisplay = rank < 3 ? medals[rank] : rank + 1;
+    const rankCls = rank < 3 ? ['r1','r2','r3'][rank] : '';
+    const topCls = rank < 3 ? entryCls[rank] : '';
+    return `<div class="lb-entry ${topCls}">
+      <div class="lb-entry-rank ${rankCls}">${rankDisplay}</div>
+      ${avatarStr}
+      <div class="lb-entry-info">
+        <div class="lb-entry-name">${e.name}</div>
+        <div class="lb-entry-meta">${e.courseName} · ${dateStr}</div>
+      </div>
+      <div class="lb-entry-score">
+        <div class="lb-entry-diff ${diffCls}">${diffStr}</div>
+        <div class="lb-entry-strokes">${e.total} strokes</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderLeaderboard() {
@@ -1383,8 +1476,7 @@ function renderLeaderboard() {
   try {
     let entries = JSON.parse(localStorage.getItem(LS_LB) || '[]')
       .filter(e => e.weekKey === wk);
-    if (lbFilter !== 'all') entries = entries.filter(e => e.course === lbFilter);
-    entries.sort((a,b) => a.diff - b.diff || a.total - b.total);
+    if (lbCourseFilter !== 'all') entries = entries.filter(e => e.course === lbCourseFilter);
 
     const container = document.getElementById('lb-entries');
     if (entries.length === 0) {
@@ -1395,28 +1487,47 @@ function renderLeaderboard() {
       </div>`;
       return;
     }
-    const rankCls  = ['r1','r2','r3'];
-    const entryCls = ['top1','top2','top3'];
-    container.innerHTML = entries.map((e, i) => {
-      const diffStr = e.diff === 0 ? 'E' : (e.diff > 0 ? '+'+e.diff : e.diff);
-      const diffCls = e.diff < 0 ? 'under' : e.diff > 0 ? 'over' : 'even';
-      const dateStr = new Date(e.completedAt).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      const avatarStr = e.photo
-        ? `<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid var(--green)"><img src="${e.photo}" style="width:100%;height:100%;object-fit:cover"></div>`
-        : `<div style="width:42px;height:42px;border-radius:50%;background:${COLORS[i%COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">${e.name?e.name[0].toUpperCase():'?'}</div>`;
-      return `<div class="lb-entry ${entryCls[i]||''}">
-        <div class="lb-entry-rank ${rankCls[i]||''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</div>
-        ${avatarStr}
-        <div class="lb-entry-info">
-          <div class="lb-entry-name">${e.name}</div>
-          <div class="lb-entry-meta">${e.courseName} · ${dateStr}</div>
-        </div>
-        <div class="lb-entry-score">
-          <div class="lb-entry-diff ${diffCls}">${diffStr}</div>
-          <div class="lb-entry-strokes">${e.total} strokes</div>
-        </div>
-      </div>`;
-    }).join('');
+
+    if (lbAgeFilter !== 'all') {
+      // Single age group — flat ranked list
+      const filtered = entries.filter(e => (e.ageGroup || 'adults') === lbAgeFilter);
+      filtered.sort((a,b) => a.diff - b.diff || a.total - b.total);
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="lb-empty">
+          <div class="lb-empty-icon">⛳</div>
+          <div class="lb-empty-title">No scores in this category yet</div>
+          <div class="lb-empty-sub">Be the first to complete a round!</div>
+        </div>`;
+      } else {
+        container.innerHTML = renderLbEntries(filtered, 0);
+      }
+    } else {
+      // All ages — group by age category with separate rankings
+      const groups = ['kids','teens','adults'];
+      let html = '';
+      let hasAny = false;
+      for (const grp of groups) {
+        const grpEntries = entries
+          .filter(e => (e.ageGroup || 'adults') === grp)
+          .sort((a,b) => a.diff - b.diff || a.total - b.total);
+        if (grpEntries.length === 0) continue;
+        hasAny = true;
+        html += `<div class="lb-group-header">
+          <div class="lb-group-title">${AGE_GROUP_LABELS[grp]}</div>
+          <div class="lb-group-line"></div>
+        </div>`;
+        html += renderLbEntries(grpEntries, 0);
+      }
+      if (!hasAny) {
+        container.innerHTML = `<div class="lb-empty">
+          <div class="lb-empty-icon">⛳</div>
+          <div class="lb-empty-title">No scores this week yet</div>
+          <div class="lb-empty-sub">Complete a round to appear on the leaderboard!</div>
+        </div>`;
+      } else {
+        container.innerHTML = html;
+      }
+    }
   } catch(err) {
     document.getElementById('lb-entries').innerHTML = '<div class="lb-empty"><div class="lb-empty-sub">Could not load scores.</div></div>';
   }
