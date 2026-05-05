@@ -1057,21 +1057,21 @@ function getIndicator(score, par) {
 }
 
 function changeScore(pid, hole, delta) {
-  const cur = state.scores[pid][hole];
-  if (cur === null) {
-    state.scores[pid][hole] = Math.max(1, 1 + (delta > 0 ? delta - 1 : 0));
+  const prev = state.scores[pid][hole];
+  if (prev === null) {
+    state.scores[pid][hole] = 1;
   } else {
-    state.scores[pid][hole] = Math.max(1, Math.min(STROKE_LIMIT, cur + delta));
+    state.scores[pid][hole] = Math.max(1, Math.min(STROKE_LIMIT, prev + delta));
   }
-  if (state.scores[pid][hole] === 1) showToast('🏆 Hole in ONE! Amazing!');
+  // Only celebrate hole-in-one when actively decremented to 1 (not on first tap)
+  if (prev !== null && prev > 1 && state.scores[pid][hole] === 1) showToast('🏆 Hole in ONE! Amazing!');
   saveResumeState();
   renderScoringHole();
 }
 
 function applyOB(pid, hole) {
-  const par = COURSE_PARS[state.course][hole];
   const cur = state.scores[pid][hole];
-  const base = cur === null ? par : cur;
+  const base = cur === null ? 1 : cur;
   state.scores[pid][hole] = Math.min(STROKE_LIMIT, base + 1);
   state.obFlags[pid][hole] = true;
   const atLimit = state.scores[pid][hole] >= STROKE_LIMIT;
@@ -1295,10 +1295,12 @@ function playAgain() {
 
 // ---- RESUME STATE ----
 const LS_RESUME = 'tf-resume-game';
+const RESUME_VERSION = 2; // bump when score format changes
 
 function saveResumeState() {
   try {
     localStorage.setItem(LS_RESUME, JSON.stringify({
+      v: RESUME_VERSION,
       course: state.course,
       players: state.players,
       scores: state.scores,
@@ -1317,6 +1319,8 @@ function checkResumeGame() {
   try {
     const saved = JSON.parse(localStorage.getItem(LS_RESUME));
     if (!saved || !saved.course || !saved.players || saved.players.length === 0) return;
+    // Discard state from old code versions (pre-fix scores started at par, not 1)
+    if (!saved.v || saved.v < RESUME_VERSION) { clearResumeState(); return; }
     // Only offer resume if saved within last 24 hours
     if (Date.now() - saved.savedAt > 24 * 60 * 60 * 1000) { clearResumeState(); return; }
     const courseName = COURSE_NAMES[saved.course] || saved.course;
