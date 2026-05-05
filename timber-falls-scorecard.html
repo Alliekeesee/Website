@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e4d2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Timber Falls Scorecard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#1e4d2b;
+  --green-mid:#2d6a3f;
+  --green-light:#4a9460;
+  --gold:#c8941a;
+  --gold-light:#f0b429;
+  --cream:#f7f2e8;
+  --cream-dark:#ede6d5;
+  --brown:#5c3a1e;
+  --blue-course:#1a5fa8;
+  --red-course:#b91c1c;
+  --black-course:#1a1a1a;
+  --white:#ffffff;
+  --gray-light:#f0ede6;
+  --gray:#9a8f7e;
+  --text:#1a1a1a;
+  --radius:16px;
+  --radius-sm:10px;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--cream);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  height:100dvh;
+}
+
+/* HEADER */
+.app-header{
+  background:var(--green);
+  padding:12px 20px 10px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-shrink:0;
+  position:relative;
+  z-index:10;
+}
+.app-header::after{
+  content:'';
+  position:absolute;
+  bottom:-6px;left:0;right:0;
+  height:6px;
+  background:var(--gold);
+}
+.header-logo{
+  height:40px;
+  width:auto;
+  filter:brightness(0) invert(1);
+  flex-shrink:0;
+}
+.header-logo-fallback{
+  width:42px;height:42px;
+  background:var(--gold);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;color:var(--green);
+  flex-shrink:0;
+}
+.header-info{flex:1}
+.header-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;
+  color:#fff;
+  letter-spacing:1px;
+  line-height:1;
+}
+.header-sub{font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;margin-top:1px}
+.header-back{
+  background:rgba(255,255,255,0.15);
+  border:none;border-radius:8px;
+  color:#fff;font-size:13px;
+  font-family:'Nunito',sans-serif;
+  font-weight:700;
+  padding:6px 12px;cursor:pointer;
+  display:none;
+}
+.header-back.visible{display:block}
+
+/* SCROLL AREA */
+.scroll-area{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:24px;
+}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block}
+
+/* HOME */
+.home-hero{
+  background:var(--green);
+  padding:28px 24px 36px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.home-hero::before{
+  content:'';
+  position:absolute;
+  bottom:-30px;left:50%;
+  transform:translateX(-50%);
+  width:120%;height:60px;
+  background:var(--cream);
+  border-radius:50% 50% 0 0;
+}
+.home-hero-icon{font-size:52px;margin-bottom:10px;display:block}
+.home-hero h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:36px;color:#fff;
+  letter-spacing:1.5px;line-height:1;
+  margin-bottom:6px;
+}
+.home-hero p{color:rgba(255,255,255,0.8);font-size:14px;font-weight:600}
+
+.home-actions{padding:32px 20px 20px}
+.home-card{
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:22px;
+  margin-bottom:14px;
+  border:2px solid transparent;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+.home-card:active{transform:scale(0.98);box-shadow:none}
+.home-card.primary{border-color:var(--green)}
+.home-card.secondary{border-color:var(--gold)}
+.home-card-icon{
+  width:56px;height:56px;
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  flex-shrink:0;
+}
+.home-card.primary .home-card-icon{background:var(--green)}
+.home-card.secondary .home-card-icon{background:var(--gold-light)}
+.home-card-text h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:3px}
+.home-card-text p{font-size:12px;color:var(--gray);font-weight:600;line-height:1.4}
+.home-card-arrow{margin-left:auto;color:var(--gray);font-size:20px;flex-shrink:0}
+
+.courses-preview{
+  margin:0 20px 20px;
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+.courses-preview h4{font-size:13px;font-weight:800;color:var(--green);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+.course-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:10px;margin-bottom:6px;
+}
+.course-pill:last-child{margin-bottom:0}
+.course-pill-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.course-pill-name{font-size:13px;font-weight:700;flex:1}
+.course-pill-holes{font-size:11px;color:var(--gray);font-weight:600}
+
+/* SETUP SCREENS */
+.screen-pad{padding:20px}
+.section-label{
+  font-size:12px;font-weight:800;
+  color:var(--green);
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+  margin-bottom:8px;
+}
+.input-field{
+  width:100%;
+  padding:13px 16px;
+  border:2px solid var(--cream-dark);
+  border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif;
+  font-size:16px;font-weight:700;
+  background:var(--white);
+  color:var(--text);
+  outline:none;
+  transition:border 0.2s;
+}
+.input-field:focus{border-color:var(--green)}
+.input-field.big{
+  font-size:28px;
+  text-align:center;
+  letter-spacing:8px;
+  text-transform:uppercase;
+  padding:18px;
+}
+.input-field.big::placeholder{letter-spacing:4px;font-size:20px}
+
+.form-group{margin-bottom:16px}
+
+.btn{
+  width:100%;padding:15px;
+  border:none;border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif;
+  font-size:16px;font-weight:800;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:scale(0.97)}
+.btn-green{background:var(--green);color:#fff}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-outline{background:transparent;border:2px solid var(--green);color:var(--green)}
+.btn-gray{background:var(--cream-dark);color:var(--gray);font-size:14px;padding:11px}
+.btn-sm{width:auto;padding:8px 16px;font-size:14px;border-radius:8px}
+.btn-danger{background:#b91c1c;color:#fff}
+
+.mb12{margin-bottom:12px}
+.mb16{margin-bottom:16px}
+.mb20{margin-bottom:20px}
+.mt8{margin-top:8px}
+.mt12{margin-top:12px}
+.mt16{margin-top:16px}
+
+/* COURSE PICKER */
+.course-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.course-option{
+  border-radius:var(--radius-sm);
+  padding:16px;
+  border:2.5px solid transparent;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:14px;
+}
+.course-option:active{transform:scale(0.98)}
+.course-option.blue-opt{background:#eef4fc;border-color:#b5d4f4}
+.course-option.red-opt{background:#fef2f2;border-color:#fecaca}
+.course-option.black-opt{background:#f3f3f3;border-color:#d1d5db}
+.course-option.selected.blue-opt{border-color:var(--blue-course);background:#dbeafe}
+.course-option.selected.red-opt{border-color:var(--red-course);background:#fee2e2}
+.course-option.selected.black-opt{border-color:var(--black-course);background:#e5e7eb}
+.course-icon-big{font-size:30px;width:48px;text-align:center;flex-shrink:0}
+.course-info-name{font-size:16px;font-weight:800}
+.course-info-sub{font-size:12px;font-weight:600;opacity:0.7;margin-top:2px}
+.course-badge-pill{
+  margin-left:auto;padding:4px 10px;
+  border-radius:20px;font-size:11px;font-weight:800;flex-shrink:0;
+}
+.blue-opt .course-badge-pill{background:var(--blue-course);color:#fff}
+.red-opt .course-badge-pill{background:var(--red-course);color:#fff}
+.black-opt .course-badge-pill{background:var(--black-course);color:#fff}
+
+/* PLAYER MANAGEMENT */
+.player-list{margin-bottom:12px}
+.player-item{
+  display:flex;align-items:center;gap:10px;
+  background:var(--white);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:8px;
+  border:1.5px solid var(--cream-dark);
+}
+.player-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.player-input-wrap{flex:1}
+.player-input{
+  border:none;outline:none;
+  font-family:'Nunito',sans-serif;
+  font-size:15px;font-weight:700;
+  background:transparent;
+  width:100%;color:var(--text);
+}
+.remove-player{
+  background:none;border:none;
+  color:#ccc;font-size:22px;cursor:pointer;
+  padding:4px;line-height:1;
+  transition:color 0.15s;
+}
+.remove-player:hover{color:#b91c1c}
+
+/* JOIN CODE */
+.code-display{
+  background:var(--green);
+  border-radius:var(--radius);
+  padding:28px 20px;
+  text-align:center;
+  margin-bottom:20px;
+}
+.code-label{font-size:12px;font-weight:800;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.code-value{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:56px;letter-spacing:10px;
+  color:var(--gold-light);
+  line-height:1;
+}
+.code-hint{font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px;font-weight:600}
+
+/* SCORING */
+.score-progress{
+  background:var(--green);
+  padding:12px 20px 14px;
+  display:flex;align-items:center;gap:12px;
+}
+.progress-track{flex:1;height:6px;background:rgba(255,255,255,0.25);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--gold-light);transition:width 0.4s}
+.progress-text{font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);white-space:nowrap}
+
+.hole-nav{
+  display:flex;gap:4px;padding:12px 20px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;flex-shrink:0;
+}
+.hole-nav::-webkit-scrollbar{display:none}
+.hole-pip{
+  width:30px;height:30px;border-radius:50%;
+  border:2px solid var(--cream-dark);
+  background:var(--white);
+  font-size:11px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--gray);flex-shrink:0;
+  transition:all 0.15s;
+}
+.hole-pip.done{background:var(--green);border-color:var(--green);color:#fff}
+.hole-pip.current{background:var(--gold);border-color:var(--gold);color:#fff;transform:scale(1.1)}
+
+.hole-card{
+  margin:0 20px 12px;
+  background:var(--white);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,0.08);
+}
+.hole-card-header{
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.hole-card-header.blue-hdr{background:var(--blue-course)}
+.hole-card-header.red-hdr{background:var(--red-course)}
+.hole-card-header.black-hdr{background:var(--black-course)}
+.hole-title{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;letter-spacing:1px}
+.hole-par-badge{
+  background:rgba(255,255,255,0.2);
+  color:#fff;font-size:12px;font-weight:800;
+  padding:4px 12px;border-radius:20px;
+}
+.hole-body{padding:14px 16px}
+
+.score-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--gray-light);
+}
+.score-row:last-child{border-bottom:none}
+.score-avatar{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.score-name{flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-controls{display:flex;align-items:center;gap:10px}
+.score-minus,.score-plus{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid;
+  background:#fff;
+  font-size:20px;font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.1s;line-height:1;
+}
+.score-minus{border-color:#b91c1c;color:#b91c1c}
+.score-plus{border-color:var(--green);color:var(--green)}
+.score-minus:active,.score-plus:active{transform:scale(0.88)}
+.score-val{width:28px;text-align:center;font-size:20px;font-weight:900;color:var(--text)}
+.score-indicator{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;
+}
+.si-ace{background:#7c3aed;color:#fff}
+.si-eagle{background:#c8941a;color:#fff}
+.si-birdie{background:var(--green);color:#fff}
+.si-par{background:#9a8f7e;color:#fff}
+.si-bogey{background:#ea580c;color:#fff}
+.si-double{background:#b91c1c;color:#fff}
+.si-worse{background:#6b1414;color:#fff}
+
+.hole-nav-btns{
+  margin:0 20px 16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+
+/* LIVE LEADERBOARD */
+.live-lb{
+  margin:0 20px 16px;
+  background:var(--white);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+.live-lb-header{
+  background:var(--green);
+  padding:10px 16px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;color:#fff;letter-spacing:1px;
+  display:flex;align-items:center;gap:8px;
+}
+.lb-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  border-bottom:1px solid var(--gray-light);
+}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;flex-shrink:0;
+}
+.rank-1{background:var(--gold-light);color:#fff}
+.rank-2{background:#a1a1aa;color:#fff}
+.rank-3{background:#a16207;color:#fff}
+.rank-x{background:var(--cream-dark);color:var(--gray)}
+.lb-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.lb-name{flex:1;font-size:14px;font-weight:700}
+.lb-thru{font-size:11px;color:var(--gray);font-weight:600}
+.lb-score{font-size:15px;font-weight:900;min-width:40px;text-align:right}
+.lb-score.under{color:var(--green)}
+.lb-score.over{color:#b91c1c}
+.lb-score.even{color:var(--gray)}
+
+/* BOTTOM ACTIONS */
+.bottom-actions{
+  padding:12px 20px;
+  background:var(--cream);
+  border-top:1px solid var(--cream-dark);
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  flex-shrink:0;
+}
+
+/* JOIN SCREEN */
+.join-hero{
+  background:var(--green);
+  padding:32px 24px 42px;
+  text-align:center;
+  position:relative;
+}
+.join-hero::after{
+  content:'';
+  position:absolute;
+  bottom:-20px;left:50%;transform:translateX(-50%);
+  width:120%;height:40px;
+  background:var(--cream);
+  border-radius:50%;
+}
+.join-hero h2{font-family:'Bebas Neue',sans-serif;font-size:32px;color:#fff;letter-spacing:1px;margin-bottom:6px}
+.join-hero p{color:rgba(255,255,255,0.75);font-size:13px;font-weight:600}
+
+.join-form{padding:36px 20px 20px}
+
+/* SCORECARD TABLE */
+.sc-wrap{overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+table.scorecard{
+  width:100%;border-collapse:collapse;
+  font-size:12px;min-width:340px;
+}
+table.scorecard th{
+  background:var(--green);color:#fff;
+  padding:7px 5px;text-align:center;font-weight:800;
+  font-size:11px;position:sticky;top:0;
+}
+table.scorecard td{padding:6px 5px;text-align:center;border-bottom:1px solid var(--cream-dark)}
+table.scorecard tr:nth-child(even) td{background:#f9f7f3}
+table.scorecard .total-cell{background:#e8f5e8;font-weight:900;color:var(--green)}
+table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* RESULTS */
+.results-hero{
+  background:var(--green);
+  padding:28px 24px 36px;
+  text-align:center;
+  position:relative;
+}
+.results-hero::after{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:120%;height:40px;background:var(--cream);border-radius:50%}
+.trophy{font-size:54px;display:block;margin-bottom:10px}
+.results-hero h2{font-family:'Bebas Neue',sans-serif;font-size:30px;color:#fff;letter-spacing:1px}
+.results-hero p{color:rgba(255,255,255,0.75);font-size:13px;font-weight:600;margin-top:4px}
+
+.podium-section{padding:36px 20px 16px}
+.podium-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--white);border-radius:var(--radius-sm);
+  padding:12px 14px;margin-bottom:8px;
+  border:2px solid transparent;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.podium-row.first{border-color:var(--gold-light);background:#fffbeb}
+.podium-row.second{border-color:#a1a1aa}
+.podium-row.third{border-color:#a16207}
+.podium-medal{font-size:24px;flex-shrink:0;width:32px;text-align:center}
+.podium-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.podium-name{flex:1;font-size:15px;font-weight:800}
+.podium-score{font-size:18px;font-weight:900;color:var(--green)}
+.podium-thru{font-size:11px;color:var(--gray);margin-top:1px}
+
+.achievements{
+  margin:0 20px 20px;
+  background:var(--white);border-radius:var(--radius);
+  padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.achievements h4{font-size:13px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.achievement-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--gray-light);
+}
+.achievement-item:last-child{border-bottom:none}
+.achievement-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center}
+.achievement-text{flex:1}
+.achievement-title{font-size:13px;font-weight:800}
+.achievement-sub{font-size:11px;color:var(--gray);font-weight:600}
+
+/* PHOTO SUBMISSION */
+.photo-submit-section{
+  margin:0 20px 20px;
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+.photo-submit-section h4{
+  font-size:13px;font-weight:800;color:var(--green);
+  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+}
+.photo-submit-section .photo-subtitle{
+  font-size:12px;color:var(--gray);font-weight:600;margin-bottom:14px;
+}
+.photo-upload-btn{
+  width:100%;padding:14px;
+  border:2px dashed var(--cream-dark);
+  border-radius:var(--radius-sm);
+  background:var(--gray-light);
+  cursor:pointer;
+  text-align:center;
+  font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:700;
+  color:var(--gray);
+  transition:all 0.15s;
+  margin-bottom:12px;
+}
+.photo-upload-btn:hover{border-color:var(--green);color:var(--green)}
+.photo-upload-btn input[type="file"]{display:none}
+.photo-preview-wrap{
+  display:none;
+  margin-bottom:12px;
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  position:relative;
+}
+.photo-preview-wrap img{
+  width:100%;max-height:220px;object-fit:cover;display:block;
+  border-radius:var(--radius-sm);
+}
+.photo-preview-remove{
+  position:absolute;top:8px;right:8px;
+  background:rgba(0,0,0,0.55);color:#fff;
+  border:none;border-radius:50%;
+  width:28px;height:28px;font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.photo-consent-row{
+  display:flex;align-items:flex-start;gap:10px;
+  margin-bottom:14px;
+}
+.photo-consent-row input[type="checkbox"]{
+  width:18px;height:18px;flex-shrink:0;
+  margin-top:2px;accent-color:var(--green);cursor:pointer;
+}
+.photo-consent-text{
+  font-size:12px;color:var(--gray);font-weight:600;line-height:1.5;
+}
+.photo-consent-text strong{color:var(--text)}
+.photo-submitted-state{
+  text-align:center;padding:16px 0 4px;
+}
+.photo-submitted-state .submitted-icon{font-size:38px;margin-bottom:8px}
+.photo-submitted-state .submitted-title{font-size:15px;font-weight:800;color:var(--green);margin-bottom:4px}
+.photo-submitted-state .submitted-sub{font-size:12px;color:var(--gray);font-weight:600}
+
+/* CONFETTI */
+#confetti{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:999;overflow:hidden}
+.c-piece{position:absolute;width:8px;height:8px;opacity:0;animation:cFall linear forwards}
+@keyframes cFall{0%{opacity:1;transform:translateY(-20px) rotate(0)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}
+
+/* Notification toast */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:#fff;
+  padding:10px 20px;border-radius:30px;
+  font-size:13px;font-weight:700;
+  opacity:0;transition:all 0.3s;z-index:998;
+  white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Waiting screen */
+.waiting-card{
+  background:var(--white);border-radius:var(--radius);
+  padding:24px;margin:0 20px 16px;
+  text-align:center;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+.waiting-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:4px solid var(--cream-dark);
+  border-top-color:var(--green);
+  animation:spin 1s linear infinite;
+  margin:0 auto 12px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.player-joined-list{margin-top:16px;text-align:left}
+.joined-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--gray-light);
+}
+.joined-row:last-child{border-bottom:none}
+.joined-you{font-size:10px;font-weight:800;background:var(--gold);color:#fff;padding:2px 6px;border-radius:4px}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--cream-dark)}
+.divider span{font-size:12px;font-weight:700;color:var(--gray)}
+
+/* Utility */
+.text-center{text-align:center}
+.text-muted{color:var(--gray);font-size:13px;font-weight:600}
+.badge-blue{background:var(--blue-course);color:#fff}
+.badge-red{background:var(--red-course);color:#fff}
+.badge-black{background:var(--black-course);color:#fff}
+</style>
+</head>
+<body>
+
+<div id="confetti"></div>
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="app-header" id="app-header">
+  <img class="header-logo" src="https://www.timberfallspark.com/wp-content/themes/tf-2016/img/logo-small.png" alt="Timber Falls" id="header-logo-img">
+  <div class="header-info">
+    <div class="header-title">Timber Falls</div>
+    <div class="header-sub" id="header-sub-text">Adventure Golf Scorecard</div>
+  </div>
+  <button class="header-back" id="back-btn" onclick="goBack()">← Back</button>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scroll-area">
+
+<!-- HOME SCREEN -->
+<div id="screen-home" class="screen active">
+  <div class="home-hero">
+    <span class="home-hero-icon">⛳</span>
+    <h2>Ready to Play?</h2>
+    <p>Track scores across all 54 holes</p>
+  </div>
+  <div class="home-actions">
+    <div class="home-card primary" onclick="showScreen('screen-setup')">
+      <div class="home-card-icon">🏌️</div>
+      <div class="home-card-text">
+        <h3>Start a New Round</h3>
+        <p>Set up players, pick a course, and get a group join code</p>
+      </div>
+      <div class="home-card-arrow">›</div>
+    </div>
+    <div class="home-card secondary" onclick="showScreen('screen-join')">
+      <div class="home-card-icon">🔗</div>
+      <div class="home-card-text">
+        <h3>Join a Group</h3>
+        <p>Enter a 4-letter code to join your group's scorecard</p>
+      </div>
+      <div class="home-card-arrow">›</div>
+    </div>
+  </div>
+  <div class="courses-preview">
+    <h4>🌲 The Three Courses</h4>
+    <div class="course-pill" style="background:#eef4fc">
+      <div class="course-pill-dot" style="background:var(--blue-course)"></div>
+      <div class="course-pill-name" style="color:var(--blue-course)">Minder's Hollow</div>
+      <div class="course-pill-holes">18 holes · Blue Course</div>
+    </div>
+    <div class="course-pill" style="background:#fef2f2">
+      <div class="course-pill-dot" style="background:var(--red-course)"></div>
+      <div class="course-pill-name" style="color:var(--red-course)">Logger's Lookout</div>
+      <div class="course-pill-holes">18 holes · Red Course</div>
+    </div>
+    <div class="course-pill" style="background:#f3f3f3">
+      <div class="course-pill-dot" style="background:var(--black-course)"></div>
+      <div class="course-pill-name" style="color:var(--black-course)">Tall Timbers</div>
+      <div class="course-pill-holes">18 holes · Black Course</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="screen-setup" class="screen">
+  <div class="screen-pad">
+    <div class="mb20">
+      <div class="section-label">Choose Course</div>
+      <div class="course-grid">
+        <div class="course-option blue-opt" onclick="selectCourse('blue')" id="opt-blue">
+          <div class="course-icon-big">🌊</div>
+          <div>
+            <div class="course-info-name" style="color:var(--blue-course)">Minder's Hollow</div>
+            <div class="course-info-sub">Blue Course · 18 Holes</div>
+          </div>
+          <div class="course-badge-pill">BLUE</div>
+        </div>
+        <div class="course-option red-opt" onclick="selectCourse('red')" id="opt-red">
+          <div class="course-icon-big">🌲</div>
+          <div>
+            <div class="course-info-name" style="color:var(--red-course)">Logger's Lookout</div>
+            <div class="course-info-sub">Red Course · 18 Holes</div>
+          </div>
+          <div class="course-badge-pill">RED</div>
+        </div>
+        <div class="course-option black-opt" onclick="selectCourse('black')" id="opt-black">
+          <div class="course-icon-big">🦅</div>
+          <div>
+            <div class="course-info-name" style="color:var(--black-course)">Tall Timbers</div>
+            <div class="course-info-sub">Black Course · 18 Holes</div>
+          </div>
+          <div class="course-badge-pill">BLACK</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb20">
+      <div class="section-label">Players (up to 6)</div>
+      <div class="player-list" id="player-list"></div>
+      <button class="btn btn-outline btn-gray" onclick="addPlayer()" id="add-player-btn">+ Add Player</button>
+    </div>
+
+    <button class="btn btn-green" onclick="startRound()">⛳ Create Round & Get Code</button>
+    <div style="margin-top:10px">
+      <button class="btn btn-gray" onclick="goBack()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOIN SCREEN -->
+<div id="screen-join" class="screen">
+  <div class="join-hero">
+    <h2>Join Your Group</h2>
+    <p>Ask the scorekeeper for the 4-letter code</p>
+  </div>
+  <div class="join-form">
+    <div class="form-group">
+      <div class="section-label">Your Name</div>
+      <input type="text" class="input-field" id="joiner-name" placeholder="Enter your name" maxlength="20">
+    </div>
+    <div class="form-group">
+      <div class="section-label">Group Code</div>
+      <input type="text" class="input-field big" id="join-code-input" placeholder="ABCD" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <button class="btn btn-gold mb12" onclick="joinGroup()">🔗 Join Group</button>
+    <button class="btn btn-gray" onclick="goBack()">Cancel</button>
+  </div>
+</div>
+
+<!-- WAITING FOR START (host) -->
+<div id="screen-waiting" class="screen">
+  <div class="screen-pad">
+    <div class="code-display">
+      <div class="code-label">Share this code with your group</div>
+      <div class="code-value" id="display-code">XXXX</div>
+      <div class="code-hint">Tap to copy · Others enter this on the join screen</div>
+    </div>
+
+    <div class="waiting-card">
+      <div class="waiting-spinner"></div>
+      <div style="font-size:14px;font-weight:700;color:var(--gray)">Waiting for players to join...</div>
+      <div class="player-joined-list" id="joined-list"></div>
+    </div>
+
+    <button class="btn btn-green mb12" onclick="beginScoring()">▶ Begin Scoring</button>
+    <button class="btn btn-gray" onclick="goBack()">Cancel Round</button>
+  </div>
+</div>
+
+<!-- JOINER WAITING -->
+<div id="screen-joined-wait" class="screen">
+  <div class="screen-pad" style="text-align:center;padding-top:60px">
+    <div style="font-size:52px;margin-bottom:16px">🏌️</div>
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--green);margin-bottom:8px">You're In!</h2>
+    <p class="text-muted mb20">Waiting for the scorekeeper to start the round...</p>
+    <div class="code-display" style="margin-bottom:20px">
+      <div class="code-label">Your Group Code</div>
+      <div class="code-value" id="joiner-display-code">XXXX</div>
+    </div>
+    <div class="waiting-spinner"></div>
+    <p class="text-muted mt12">The scorekeeper will start the round shortly</p>
+  </div>
+</div>
+
+<!-- SCORING SCREEN -->
+<div id="screen-scoring" class="screen">
+  <div id="score-progress-bar" class="score-progress">
+    <div class="progress-track"><div class="progress-fill" id="score-progress-fill"></div></div>
+    <div class="progress-text" id="score-progress-text">1 / 18</div>
+  </div>
+  <div class="hole-nav" id="hole-nav-dots"></div>
+  <div id="hole-card-area"></div>
+  <div class="hole-nav-btns">
+    <button class="btn btn-outline btn-sm" id="prev-hole-btn" onclick="prevHole()">‹ Prev</button>
+    <button class="btn btn-green btn-sm" id="next-hole-btn" onclick="nextHole()">Next ›</button>
+  </div>
+  <div class="live-lb" id="live-lb">
+    <div class="live-lb-header">🏆 Live Standings</div>
+    <div id="live-lb-rows"></div>
+  </div>
+  <div style="margin:0 20px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn btn-gray" onclick="showScorecardView()">📋 Full Card</button>
+    <button class="btn btn-gold" onclick="finishRound()">🏁 Finish Round</button>
+  </div>
+</div>
+
+<!-- SCORECARD VIEW -->
+<div id="screen-scorecard" class="screen">
+  <div class="screen-pad">
+    <div class="section-label mb12">Full Scorecard</div>
+    <div class="sc-wrap" id="sc-table-wrap"></div>
+    <button class="btn btn-green" onclick="showScreen('screen-scoring')">← Back to Scoring</button>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="screen-results" class="screen">
+  <div class="results-hero">
+    <span class="trophy">🏆</span>
+    <h2>Round Complete!</h2>
+    <p id="results-course-name">Minder's Hollow · Blue Course</p>
+  </div>
+  <div class="podium-section" id="podium-section"></div>
+  <div class="achievements" id="achievements-section"></div>
+
+  <!-- PHOTO SUBMISSION -->
+  <div class="photo-submit-section" id="photo-submit-section">
+    <h4>📸 Share Your Experience</h4>
+    <p class="photo-subtitle">Got a great shot from your round? We'd love to see it!</p>
+    <label class="photo-upload-btn" id="photo-upload-label">
+      <input type="file" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
+      📷 Tap to choose or take a photo
+    </label>
+    <div class="photo-preview-wrap" id="photo-preview-wrap">
+      <img id="photo-preview" src="" alt="Your photo">
+      <button class="photo-preview-remove" onclick="removePhoto()" title="Remove photo">✕</button>
+    </div>
+    <div class="photo-consent-row">
+      <input type="checkbox" id="photo-consent">
+      <label class="photo-consent-text" for="photo-consent">
+        <strong>Marketing consent:</strong> By submitting this photo, you agree that Timber Falls Adventure Park may use it on our website, social media, and other marketing materials. Photos will not be sold to third parties.
+      </label>
+    </div>
+    <button class="btn btn-green" onclick="submitPhoto()">📤 Submit Photo</button>
+  </div>
+
+  <div class="screen-pad">
+    <div class="section-label mb12">Scorecard</div>
+    <div class="sc-wrap" id="results-sc-table"></div>
+    <button class="btn btn-green mb12" onclick="playAgain()">⛳ Play Another Round</button>
+    <button class="btn btn-outline" onclick="showScreen('screen-home')">🏠 Home</button>
+  </div>
+</div>
+
+</div><!-- end scroll-area -->
+
+<script>
+// ---- STATE ----
+const COLORS = ['#1e4d2b','#c8941a','#1a5fa8','#b91c1c','#7c3aed','#0891b2'];
+const COURSE_PARS = {blue:[3,3,2,3,3,4,3,2,4,3,3,3,2,4,3,3,3,3],red:[3,3,3,2,4,3,3,2,3,3,3,4,3,3,2,3,4,3],black:[4,3,3,3,2,3,4,3,3,2,4,3,3,3,3,4,2,3]};
+const COURSE_NAMES = {blue:"Minder's Hollow",red:"Logger's Lookout",black:"Tall Timbers"};
+const COURSE_HDR = {blue:'blue-hdr',red:'red-hdr',black:'black-hdr'};
+
+let state = {
+  course: null,
+  players: [],
+  scores: {},
+  currentHole: 0,
+  code: '',
+  role: 'host',
+  myName: '',
+  gameCode: '',
+  totalHoles: 18,
+};
+
+// ---- NAVIGATION ----
+let screenHistory = ['screen-home'];
+
+function showScreen(id, addHistory=true) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('scroll-area').scrollTop = 0;
+  if (addHistory) screenHistory.push(id);
+  updateHeader(id);
+}
+
+function goBack() {
+  if (screenHistory.length > 1) {
+    screenHistory.pop();
+    const prev = screenHistory[screenHistory.length - 1];
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(prev).classList.add('active');
+    document.getElementById('scroll-area').scrollTop = 0;
+    updateHeader(prev);
+  }
+}
+
+function updateHeader(screenId) {
+  const backBtn = document.getElementById('back-btn');
+  const sub = document.getElementById('header-sub-text');
+  const noBack = ['screen-home','screen-results'];
+  backBtn.classList.toggle('visible', !noBack.includes(screenId));
+
+  const labels = {
+    'screen-home':'Adventure Golf Scorecard',
+    'screen-setup':'New Round Setup',
+    'screen-join':'Join a Group',
+    'screen-waiting':'Share Your Code',
+    'screen-joined-wait':'Waiting for Host',
+    'screen-scoring': state.course ? COURSE_NAMES[state.course] : 'Scoring',
+    'screen-scorecard':'Scorecard',
+    'screen-results':'Results',
+  };
+  sub.textContent = labels[screenId] || 'Adventure Golf';
+}
+
+// ---- COURSE SELECTION ----
+function selectCourse(c) {
+  state.course = c;
+  ['blue','red','black'].forEach(x => {
+    document.getElementById('opt-'+x).classList.remove('selected');
+  });
+  document.getElementById('opt-'+c).classList.add('selected');
+}
+
+// ---- PLAYER MANAGEMENT ----
+function addPlayer() {
+  if (state.players.length >= 6) { showToast('Max 6 players'); return; }
+  const id = Date.now();
+  state.players.push({id, name:'', color: COLORS[state.players.length]});
+  renderPlayers();
+}
+
+function removePlayer(id) {
+  state.players = state.players.filter(p => p.id !== id);
+  renderPlayers();
+}
+
+function renderPlayers() {
+  const list = document.getElementById('player-list');
+  const addBtn = document.getElementById('add-player-btn');
+  list.innerHTML = state.players.map((p,i) => `
+    <div class="player-item">
+      <div class="player-avatar" id="avatar-${p.id}" style="background:${p.color}">${p.name ? p.name[0].toUpperCase() : (i+1)}</div>
+      <div class="player-input-wrap">
+        <input class="player-input" placeholder="Player ${i+1} name" value="${p.name}"
+          oninput="updatePlayerName(${p.id}, this.value)">
+      </div>
+      ${state.players.length > 1 ? `<button class="remove-player" onclick="removePlayer(${p.id})">×</button>` : ''}
+    </div>
+  `).join('');
+  addBtn.style.display = state.players.length >= 6 ? 'none' : 'flex';
+}
+
+// Update name in state and refresh only the avatar initial — no full re-render so typing stays smooth
+function updatePlayerName(id, val) {
+  const p = state.players.find(p => p.id === id);
+  if (!p) return;
+  p.name = val;
+  const avatar = document.getElementById('avatar-' + id);
+  if (avatar) avatar.textContent = val ? val[0].toUpperCase() : String(state.players.indexOf(p) + 1);
+}
+
+// ---- INIT SETUP ----
+function initSetup() {
+  state.players = [];
+  state.course = null;
+  ['blue','red','black'].forEach(x => document.getElementById('opt-'+x).classList.remove('selected'));
+  addPlayer(); addPlayer();
+  renderPlayers();
+}
+
+// ---- START ROUND ----
+function startRound() {
+  if (!state.course) { showToast('Please choose a course'); return; }
+  // Read current player names from live inputs
+  document.querySelectorAll('.player-input').forEach((inp, i) => {
+    if (state.players[i]) state.players[i].name = inp.value.trim() || 'Player '+(i+1);
+  });
+  state.players.forEach((p, i) => { if (!p.name) p.name = 'Player '+(i+1); });
+  if (state.players.length === 0) { showToast('Add at least 1 player'); return; }
+
+  // Init scores
+  state.scores = {};
+  state.players.forEach(p => { state.scores[p.id] = new Array(18).fill(null); });
+  state.currentHole = 0;
+  state.role = 'host';
+
+  // Generate code
+  state.code = Array.from({length:4}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*23)]).join('');
+
+  // Show waiting
+  document.getElementById('display-code').textContent = state.code;
+  document.getElementById('display-code').parentElement.onclick = () => {
+    navigator.clipboard?.writeText(state.code).then(() => showToast('Code copied!'));
+  };
+  renderJoinedList();
+  showScreen('screen-waiting');
+}
+
+function renderJoinedList() {
+  const list = document.getElementById('joined-list');
+  list.innerHTML = state.players.map((p,i) => `
+    <div class="joined-row">
+      <div class="player-avatar" style="background:${p.color};width:30px;height:30px;font-size:12px">${p.name[0].toUpperCase()}</div>
+      <span style="font-size:14px;font-weight:700;flex:1">${p.name}</span>
+      ${i===0 ? '<span class="joined-you">HOST</span>' : '<span style="font-size:11px;color:var(--gray);font-weight:600">✓ ready</span>'}
+    </div>
+  `).join('');
+}
+
+// ---- JOIN GROUP ----
+function joinGroup() {
+  const name = document.getElementById('joiner-name').value.trim();
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  if (!name) { showToast('Enter your name'); return; }
+  if (code.length !== 4) { showToast('Enter a 4-letter code'); return; }
+
+  state.myName = name;
+  state.gameCode = code;
+  state.role = 'viewer';
+
+  const newPlayer = {id: Date.now(), name, color: COLORS[state.players.length % COLORS.length]};
+  state.players.push(newPlayer);
+  state.scores[newPlayer.id] = new Array(18).fill(null);
+
+  document.getElementById('joiner-display-code').textContent = code;
+  showScreen('screen-joined-wait');
+
+  // Simulate host starting after 2s (demo)
+  setTimeout(() => {
+    if (!state.course) { state.course = 'blue'; }
+    beginScoring();
+  }, 2000);
+}
+
+// ---- BEGIN SCORING ----
+function beginScoring() {
+  renderScoringHole();
+  showScreen('screen-scoring');
+  updateHeader('screen-scoring');
+}
+
+// ---- SCORING LOGIC ----
+function renderScoringHole() {
+  const hole = state.currentHole;
+  const pars = COURSE_PARS[state.course];
+  const total = 18;
+
+  // Progress
+  const pct = Math.round((hole / total) * 100);
+  document.getElementById('score-progress-fill').style.width = pct+'%';
+  document.getElementById('score-progress-text').textContent = `${hole+1} / ${total}`;
+
+  // Hole nav dots
+  const dots = document.getElementById('hole-nav-dots');
+  dots.innerHTML = Array.from({length:18},(_,i) => {
+    const done = state.players.some(p => state.scores[p.id][i] !== null);
+    const cls = i===hole ? 'current' : (done ? 'done' : '');
+    return `<div class="hole-pip ${cls}" onclick="jumpHole(${i})">${i+1}</div>`;
+  }).join('');
+  setTimeout(() => { const cur = dots.querySelector('.current'); if(cur) cur.scrollIntoView({inline:'center',behavior:'smooth'}); }, 50);
+
+  // Hole card
+  const hdr = COURSE_HDR[state.course];
+  const par = pars[hole];
+  const area = document.getElementById('hole-card-area');
+  area.innerHTML = `
+    <div class="hole-card">
+      <div class="hole-card-header ${hdr}">
+        <div class="hole-title">Hole ${hole+1}</div>
+        <div class="hole-par-badge">Par ${par}</div>
+      </div>
+      <div class="hole-body">
+        ${state.players.map(p => {
+          const score = state.scores[p.id][hole];
+          const indicator = score !== null ? getIndicator(score, par) : '';
+          return `
+          <div class="score-row">
+            <div class="score-avatar" style="background:${p.color}">${p.name[0].toUpperCase()}</div>
+            <div class="score-name">${p.name}</div>
+            <div class="score-controls">
+              ${indicator}
+              <button class="score-minus" onclick="changeScore(${p.id},${hole},-1)">−</button>
+              <div class="score-val">${score !== null ? score : '−'}</div>
+              <button class="score-plus" onclick="changeScore(${p.id},${hole},1)">+</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  document.getElementById('prev-hole-btn').disabled = hole === 0;
+  document.getElementById('next-hole-btn').textContent = hole === 17 ? '🏁 Finish' : 'Next ›';
+
+  renderLiveLeaderboard();
+}
+
+function getIndicator(score, par) {
+  const diff = score - par;
+  if (score === 1) return '<div class="score-indicator si-ace" title="Hole in One!">🏆</div>';
+  if (diff <= -2) return '<div class="score-indicator si-eagle">E</div>';
+  if (diff === -1) return '<div class="score-indicator si-birdie">B</div>';
+  if (diff === 0) return '<div class="score-indicator si-par">P</div>';
+  if (diff === 1) return '<div class="score-indicator si-bogey">+1</div>';
+  if (diff === 2) return '<div class="score-indicator si-double">+2</div>';
+  return '<div class="score-indicator si-worse">+'+diff+'</div>';
+}
+
+function changeScore(pid, hole, delta) {
+  const cur = state.scores[pid][hole];
+  if (cur === null && delta < 0) {
+    const par = COURSE_PARS[state.course][hole];
+    state.scores[pid][hole] = Math.max(1, par - 1);
+  } else if (cur === null) {
+    state.scores[pid][hole] = COURSE_PARS[state.course][hole];
+  } else {
+    state.scores[pid][hole] = Math.max(1, Math.min(12, cur + delta));
+  }
+  if (state.scores[pid][hole] === 1) showToast('🏆 Hole in ONE! Amazing!');
+  renderScoringHole();
+}
+
+function jumpHole(i) { state.currentHole = i; renderScoringHole(); }
+function prevHole() { if (state.currentHole > 0) { state.currentHole--; renderScoringHole(); } }
+function nextHole() {
+  if (state.currentHole === 17) { finishRound(); return; }
+  state.currentHole++;
+  renderScoringHole();
+}
+
+function renderLiveLeaderboard() {
+  const totals = state.players.map(p => {
+    const filled = state.scores[p.id].filter(s => s !== null);
+    const total = filled.reduce((a,b) => a+b, 0);
+    const parTotal = COURSE_PARS[state.course].slice(0,filled.length).reduce((a,b)=>a+b,0);
+    return {p, total, thru: filled.length, diff: total - parTotal};
+  }).sort((a,b) => {
+    if (a.thru === 0 && b.thru === 0) return 0;
+    if (a.thru === 0) return 1;
+    if (b.thru === 0) return -1;
+    return a.diff - b.diff || b.thru - a.thru;
+  });
+
+  const ranks = ['rank-1','rank-2','rank-3'];
+  document.getElementById('live-lb-rows').innerHTML = totals.map((t,i) => {
+    const diffStr = t.thru === 0 ? '-' : (t.diff === 0 ? 'E' : (t.diff > 0 ? '+'+t.diff : t.diff));
+    const cls = t.diff < 0 ? 'under' : t.diff > 0 ? 'over' : 'even';
+    return `<div class="lb-row">
+      <div class="lb-rank ${ranks[i]||'rank-x'}">${i+1}</div>
+      <div class="lb-avatar" style="background:${t.p.color}">${t.p.name[0].toUpperCase()}</div>
+      <div class="lb-name">${t.p.name}<br><span class="lb-thru">Thru ${t.thru}</span></div>
+      <div class="lb-score ${cls}">${diffStr}${t.thru > 0 ? `<br><span style="font-size:10px;font-weight:600;color:var(--gray)">${t.total} strokes</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- SCORECARD VIEW ----
+function showScorecardView() {
+  renderScorecardTable('sc-table-wrap');
+  showScreen('screen-scorecard');
+}
+
+function renderScorecardTable(containerId) {
+  const pars = COURSE_PARS[state.course];
+  const holes = Array.from({length:18},(_,i)=>i+1);
+  const html = `<table class="scorecard">
+    <thead>
+      <tr>
+        <th class="name-cell">Player</th>
+        ${holes.map(h=>`<th>${h}</th>`).join('')}
+        <th>TOT</th>
+      </tr>
+      <tr>
+        <th class="name-cell" style="background:#145a1e">Par</th>
+        ${pars.map(p=>`<th style="background:#145a1e">${p}</th>`).join('')}
+        <th style="background:#145a1e">${pars.reduce((a,b)=>a+b,0)}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${state.players.map(p => {
+        const scores = state.scores[p.id];
+        const total = scores.filter(s=>s!==null).reduce((a,b)=>a+b,0);
+        return `<tr>
+          <td class="name-cell">${p.name}</td>
+          ${scores.map(s=>`<td>${s!==null?s:''}</td>`).join('')}
+          <td class="total-cell">${total||''}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+  document.getElementById(containerId).innerHTML = html;
+}
+
+// ---- FINISH ROUND ----
+function finishRound() {
+  const courseName = COURSE_NAMES[state.course];
+  document.getElementById('results-course-name').textContent = `${courseName} · ${state.course.charAt(0).toUpperCase()+state.course.slice(1)} Course`;
+
+  const totals = state.players.map(p => {
+    const pars = COURSE_PARS[state.course];
+    const scores = state.scores[p.id];
+    const filled = scores.map((s,i) => s !== null ? s : pars[i]);
+    const total = filled.reduce((a,b)=>a+b,0);
+    const parTotal = pars.reduce((a,b)=>a+b,0);
+    return {p, total, diff: total - parTotal};
+  }).sort((a,b) => a.diff - b.diff);
+
+  const medals = ['🥇','🥈','🥉'];
+  const pClasses = ['first','second','third'];
+  const podium = document.getElementById('podium-section');
+  podium.innerHTML = totals.map((t,i) => {
+    const diff = t.diff === 0 ? 'Even par' : (t.diff > 0 ? '+'+t.diff+' over par' : Math.abs(t.diff)+' under par');
+    return `<div class="podium-row ${pClasses[i]||''}">
+      <div class="podium-medal">${medals[i]||i+1}</div>
+      <div class="podium-avatar" style="background:${t.p.color}">${t.p.name[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div class="podium-name">${t.p.name}</div>
+        <div class="podium-thru">${diff}</div>
+      </div>
+      <div>
+        <div class="podium-score">${t.total}</div>
+        <div style="font-size:11px;color:var(--gray);text-align:right">${t.diff > 0 ? '+'+t.diff : t.diff}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const achievements = [];
+  state.players.forEach(p => {
+    const pars = COURSE_PARS[state.course];
+    state.scores[p.id].forEach((s, i) => {
+      if (s === null) return;
+      if (s === 1) achievements.push({icon:'🏆',title:`${p.name} got a Hole in One!`, sub:`Hole ${i+1} · Par ${pars[i]}`});
+      else if (s - pars[i] <= -2) achievements.push({icon:'🦅',title:`${p.name} scored an Eagle!`, sub:`Hole ${i+1} · ${s} on a Par ${pars[i]}`});
+      else if (s - pars[i] === -1) achievements.push({icon:'🐦',title:`${p.name} got a Birdie!`, sub:`Hole ${i+1} · ${s} on a Par ${pars[i]}`});
+    });
+  });
+
+  const achEl = document.getElementById('achievements-section');
+  if (achievements.length > 0) {
+    achEl.innerHTML = `<h4>🌟 Highlights</h4>${achievements.slice(0,6).map(a => `
+      <div class="achievement-item">
+        <div class="achievement-icon">${a.icon}</div>
+        <div class="achievement-text">
+          <div class="achievement-title">${a.title}</div>
+          <div class="achievement-sub">${a.sub}</div>
+        </div>
+      </div>`).join('')}`;
+  } else {
+    achEl.innerHTML = '';
+  }
+
+  // Reset photo section
+  resetPhotoSection();
+
+  renderScorecardTable('results-sc-table');
+  showScreen('screen-results');
+  launchConfetti();
+}
+
+// ---- PHOTO SUBMISSION ----
+function resetPhotoSection() {
+  document.getElementById('photo-submit-section').innerHTML = `
+    <h4>📸 Share Your Experience</h4>
+    <p class="photo-subtitle">Got a great shot from your round? We'd love to see it!</p>
+    <label class="photo-upload-btn" id="photo-upload-label">
+      <input type="file" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">
+      📷 Tap to choose or take a photo
+    </label>
+    <div class="photo-preview-wrap" id="photo-preview-wrap">
+      <img id="photo-preview" src="" alt="Your photo">
+      <button class="photo-preview-remove" onclick="removePhoto()" title="Remove photo">✕</button>
+    </div>
+    <div class="photo-consent-row">
+      <input type="checkbox" id="photo-consent">
+      <label class="photo-consent-text" for="photo-consent">
+        <strong>Marketing consent:</strong> By submitting this photo, you agree that Timber Falls Adventure Park may use it on our website, social media, and other marketing materials. Photos will not be sold to third parties.
+      </label>
+    </div>
+    <button class="btn btn-green" onclick="submitPhoto()">📤 Submit Photo</button>`;
+}
+
+function handlePhotoSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photo-preview').src = e.target.result;
+    document.getElementById('photo-preview-wrap').style.display = 'block';
+    document.getElementById('photo-upload-label').textContent = '✓ Photo selected — tap to change';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  document.getElementById('photo-preview-wrap').style.display = 'none';
+  document.getElementById('photo-preview').src = '';
+  // Rebuild the label with a fresh file input
+  const label = document.getElementById('photo-upload-label');
+  label.innerHTML = '<input type="file" accept="image/*" capture="environment" onchange="handlePhotoSelect(this)">📷 Tap to choose or take a photo';
+}
+
+function submitPhoto() {
+  const preview = document.getElementById('photo-preview');
+  const consent = document.getElementById('photo-consent');
+  if (!preview.src || preview.src === window.location.href) {
+    showToast('Please choose a photo first');
+    return;
+  }
+  if (!consent.checked) {
+    showToast('Please agree to the marketing terms');
+    return;
+  }
+  document.getElementById('photo-submit-section').innerHTML = `
+    <div class="photo-submitted-state">
+      <div class="submitted-icon">📸</div>
+      <div class="submitted-title">Photo Submitted — Thank You!</div>
+      <div class="submitted-sub">Thanks for sharing your Timber Falls adventure.<br>It may appear in our marketing — we appreciate it!</div>
+    </div>`;
+}
+
+// ---- CONFETTI ----
+function launchConfetti() {
+  const el = document.getElementById('confetti');
+  el.innerHTML = '';
+  const colors = ['#1e4d2b','#c8941a','#f0b429','#1a5fa8','#b91c1c','#fff'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'c-piece';
+    p.style.cssText = `left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*1.5}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+    el.appendChild(p);
+  }
+  setTimeout(() => el.innerHTML = '', 5000);
+}
+
+// ---- UTILS ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function playAgain() {
+  state = {course:null,players:[],scores:{},currentHole:0,code:'',role:'host',myName:'',gameCode:'',totalHoles:18};
+  initSetup();
+  screenHistory = ['screen-home','screen-setup'];
+  showScreen('screen-setup', false);
+}
+
+// ---- INIT ----
+document.getElementById('header-logo-img').onerror = function() {
+  this.style.display = 'none';
+};
+initSetup();
+</script>
+</body>
+</html>
