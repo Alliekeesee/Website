@@ -253,7 +253,7 @@ textarea::placeholder{color:var(--muted);}
 <div class="app-body">
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <div class="sb-top"><div class="sb-lbl">The Gallagher Crew</div></div>
+    <div class="sb-top"><div class="sb-lbl">The Gallagher Crew</div><button class="add-btn" onclick="clearAllHist()" title="Clear all conversation history" style="color:var(--muted);background:transparent;border-color:var(--border);">Clear Memory</button></div>
     <div class="agents-scroll">
       <div class="sec">Onboarding</div>
       <div class="arow" id="row-svetlana" onclick="selAgent('svetlana')">
@@ -551,12 +551,31 @@ const QP = {
 // ── STATE ──
 let cur = 'fiona';
 let client = 'Knuckleheads';
-let hist = {};
+let hist = JSON.parse(localStorage.getItem('dd_hist') || '{}');
 let files = [];
 let selInd = '';
 let apiKey = localStorage.getItem('dd_key') || '';
-// QA state per conversation key
-let qaState = {}; // key -> {draft, agentId, round, status}
+let qaState = {};
+
+function saveHist() {
+  // Trim each convo to last 60 messages to stay within localStorage limits
+  const trimmed = {};
+  for (const k in hist) { trimmed[k] = hist[k].slice(-60); }
+  try { localStorage.setItem('dd_hist', JSON.stringify(trimmed)); } catch(e) {}
+}
+function clearHist(agentId, clientName) {
+  const key = `${agentId}::${clientName}`;
+  delete hist[key];
+  saveHist();
+  renderMsgs();
+  toast(`Cleared ${A[agentId].n}'s history for ${clientName}.`);
+}
+function clearAllHist() {
+  hist = {};
+  saveHist();
+  renderMsgs();
+  toast('All conversation history cleared.');
+}
 
 if (apiKey) document.getElementById('apibanner').style.display='none';
 
@@ -733,6 +752,7 @@ async function send(){
     const sys=`${ag.sys}\n\nActive client: ${client}. Occasionally address Allie by name. Be specific and actionable. Never use em dashes.`;
     const reply = await callAPI(sys, h, WEB_SEARCH_AGENTS.has(cur));
     h.push({role:'assistant',content:reply});
+    saveHist();
     typing.remove();
     setDone(cur);
     addAgentMsg(reply);
