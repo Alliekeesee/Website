@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DellSide Digital — Agency AI Team</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+:root {
+  --blue:#0066FF; --blue-d:#0047CC; --blue-bg:rgba(0,102,255,0.07);
+  --green:#00C47A; --green-bg:rgba(0,196,122,0.1);
+  --orange:#FF8C00; --orange-bg:rgba(255,140,0,0.1);
+  --red:#EF4444; --red-bg:rgba(239,68,68,0.08);
+  --purple:#8B5CF6; --purple-bg:rgba(139,92,246,0.08);
+  --bg:#F2F5FF; --surface:#fff; --surface2:#EEF2FF;
+  --border:#D8E3FF; --text:#0A0F1E; --text2:#4A5578; --muted:#8892B0;
+  --shadow:0 2px 12px rgba(0,40,120,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:var(--shadow);z-index:100;}
+.brand{font-family:'Nunito',sans-serif;font-weight:900;font-size:19px;color:var(--blue);}
+.brand span{color:var(--text);}
+.crew-pill{display:flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid rgba(0,196,122,0.25);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--green);}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:glow 2s infinite;}
+@keyframes glow{0%,100%{box-shadow:0 0 0 2px rgba(0,196,122,0.25);}50%{box-shadow:0 0 0 5px rgba(0,196,122,0.08);}}
+
+/* API BANNER */
+.apibanner{background:linear-gradient(90deg,#050F2E,#0A2080);color:white;padding:10px 20px;display:flex;align-items:center;gap:12px;font-size:13px;flex-shrink:0;}
+.apibanner strong{color:#7EB3FF;}
+.apibanner input{flex:1;max-width:300px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:7px 12px;color:white;font-size:13px;font-family:inherit;outline:none;}
+.apibanner input::placeholder{color:rgba(255,255,255,0.35);}
+.abtn{background:var(--blue);color:white;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.abtn:hover{background:var(--blue-d);}
+.abtn.g{background:transparent;border:1px solid rgba(255,255,255,0.2);}
+.abtn.g:hover{background:rgba(255,255,255,0.1);}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:272px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.sb-top{padding:13px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sb-lbl{font-family:'Nunito',sans-serif;font-weight:800;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);}
+.agents-scroll{flex:1;overflow-y:auto;padding:7px 7px 4px;}
+.agents-scroll::-webkit-scrollbar{width:3px;}
+.agents-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.sec{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:7px 10px 3px;}
+.div{height:1px;background:var(--border);margin:4px 8px;}
+
+.arow{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;cursor:pointer;margin-bottom:1px;border:1.5px solid transparent;transition:all 0.12s;}
+.arow:hover{background:var(--blue-bg);}
+.arow.active{background:var(--blue-bg);border-color:rgba(0,102,255,0.28);}
+.arow.working{background:var(--orange-bg)!important;border-color:var(--orange)!important;}
+.arow.qa-agent{border-color:var(--purple)!important;}
+.arow.qa-agent.active{background:var(--purple-bg)!important;}
+
+.av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:white;flex-shrink:0;position:relative;}
+.av .ring{display:none;position:absolute;inset:-3px;border-radius:12px;border:2px solid var(--orange);animation:ring 1.1s infinite;}
+.arow.working .av .ring{display:block;}
+@keyframes ring{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.ainfo{flex:1;min-width:0;}
+.aname{font-weight:700;font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.arole{font-size:10.5px;color:var(--muted);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.aright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.obadge{font-size:9px;font-weight:800;color:var(--blue);background:var(--blue-bg);border-radius:4px;padding:2px 5px;}
+.obadge.qa{color:var(--purple);background:var(--purple-bg);}
+.sbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+.sbadge.idle{color:var(--muted);background:var(--surface2);}
+.sbadge.working{color:var(--orange);background:var(--orange-bg);animation:bp 1s infinite;}
+.sbadge.done{color:var(--green);background:var(--green-bg);}
+.sbadge.reviewing{color:var(--purple);background:var(--purple-bg);animation:bp 1s infinite;}
+@keyframes bp{0%,100%{opacity:1;}50%{opacity:0.55;}}
+
+/* CLIENT SECTION */
+.client-sec{border-top:1px solid var(--border);padding:11px 10px;flex-shrink:0;}
+.client-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.client-hdr-lbl{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.add-btn{font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(0,102,255,0.2);border-radius:20px;padding:3px 10px;cursor:pointer;font-family:inherit;transition:all 0.12s;}
+.add-btn:hover{background:var(--blue);color:white;border-color:var(--blue);}
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all 0.12s;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.chip:hover,.chip.active{background:var(--blue);border-color:var(--blue);color:white;}
+.chip .cx{font-size:13px;line-height:1;opacity:0.55;cursor:pointer;}
+.chip .cx:hover{opacity:1;}
+
+/* MODAL */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(5,15,46,0.5);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.backdrop.open{display:flex;}
+.modal{background:var(--surface);border-radius:18px;padding:28px;width:430px;max-width:92vw;box-shadow:0 20px 60px rgba(0,40,120,0.22);animation:min 0.2s ease;}
+@keyframes min{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:none;}}
+.modal-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:20px;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:20px;}
+.flabel{font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;}
+.finput{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:inherit;font-size:14px;color:var(--text);background:var(--surface2);outline:none;margin-bottom:14px;transition:border-color 0.12s;}
+.finput:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(0,102,255,0.07);}
+.finput::placeholder{color:var(--muted);}
+.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;}
+.iopt{padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;text-align:center;font-family:inherit;transition:all 0.12s;}
+.iopt:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+.iopt.sel{background:var(--blue);border-color:var(--blue);color:white;}
+.macts{display:flex;gap:9px;}
+.btnp{flex:1;background:var(--blue);color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btnp:hover{background:var(--blue-d);}
+.btns{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btns:hover{background:var(--border);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* CHAT HEADER */
+.chat-hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.hav{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:white;flex-shrink:0;position:relative;}
+.hav .wind{display:none;position:absolute;bottom:-3px;right:-3px;width:13px;height:13px;background:var(--orange);border-radius:50%;border:2px solid var(--surface);animation:go 1s infinite;}
+.hav.working .wind{display:block;}
+@keyframes go{0%,100%{box-shadow:0 0 0 2px rgba(255,140,0,0.3);}50%{box-shadow:0 0 0 5px rgba(255,140,0,0.1);}}
+.hinfo{flex:1;}
+.hname{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;}
+.hdesc{font-size:12px;color:var(--muted);font-weight:500;margin-top:1px;}
+.htags{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.htag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue);border:1px solid rgba(0,102,255,0.15);}
+.wtag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--orange-bg);color:var(--orange);border:1px solid rgba(255,140,0,0.25);display:none;animation:bp 1s infinite;}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:13px;}
+.msgs::-webkit-scrollbar{width:4px;}
+.msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.msg{display:flex;gap:10px;animation:up 0.25s ease;}
+.msg.user{flex-direction:row-reverse;}
+@keyframes up{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.mav{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:11px;color:white;flex-shrink:0;margin-top:2px;}
+.mav.uav{background:#334155;}
+.mbody{max-width:76%;}
+.mwho{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.msg.user .mwho{text-align:right;}
+.bub{background:var(--surface);border:1px solid var(--border);border-radius:14px;border-top-left-radius:3px;padding:11px 15px;font-size:13.5px;line-height:1.65;color:var(--text);box-shadow:0 1px 4px rgba(0,40,120,0.06);}
+.msg.user .bub{background:var(--blue);border-color:var(--blue-d);color:white;border-top-left-radius:14px;border-top-right-radius:3px;box-shadow:0 2px 12px rgba(0,102,255,0.22);}
+.bub p{margin-bottom:7px;}.bub p:last-child{margin-bottom:0;}
+.bub ul{padding-left:18px;margin:5px 0;}.bub li{margin-bottom:3px;}
+.bub strong{font-weight:700;}
+
+/* QA CARD */
+.qa-card{border-radius:13px;padding:16px 18px;margin-top:4px;border:2px solid;animation:up 0.3s ease;}
+.qa-card.reviewing{background:var(--purple-bg);border-color:var(--purple);}
+.qa-card.flagged{background:var(--red-bg);border-color:var(--red);}
+.qa-card.approved{background:var(--green-bg);border-color:var(--green);}
+.qa-card.final{background:linear-gradient(135deg,rgba(0,196,122,0.12),rgba(0,102,255,0.08));border-color:var(--green);}
+.qa-header{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.qa-icon{font-size:18px;}
+.qa-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;}
+.qa-card.reviewing .qa-title{color:var(--purple);}
+.qa-card.flagged .qa-title{color:var(--red);}
+.qa-card.approved .qa-title,.qa-card.final .qa-title{color:var(--green);}
+.qa-body{font-size:13px;line-height:1.6;color:var(--text2);margin-bottom:12px;}
+.qa-body strong{color:var(--text);font-weight:700;}
+.qa-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.qa-btn{font-size:12px;font-weight:700;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;transition:all 0.12s;}
+.qa-btn.approve{background:var(--green);color:white;box-shadow:0 2px 10px rgba(0,196,122,0.3);}
+.qa-btn.approve:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.qa-btn.tweak{background:var(--surface);color:var(--text2);border:1.5px solid var(--border);}
+.qa-btn.tweak:hover{background:var(--surface2);}
+.qa-btn.send-revision{background:var(--orange);color:white;}
+.qa-btn.send-revision:hover{filter:brightness(1.08);}
+.qa-round{font-size:10px;font-weight:700;color:var(--muted);margin-top:8px;}
+
+.fpill-msg{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;margin-bottom:7px;}
+
+/* TYPING */
+.trow{display:flex;gap:10px;animation:up 0.25s ease;}
+.tbub{background:var(--surface);border:1px solid var(--border);border-radius:14px;border-top-left-radius:3px;padding:12px 15px;display:flex;align-items:center;gap:4px;box-shadow:0 1px 4px rgba(0,40,120,0.06);}
+.td{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:td 1.2s infinite;}
+.td:nth-child(2){animation-delay:0.2s;}.td:nth-child(3){animation-delay:0.4s;}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:0.4;}30%{transform:translateY(-4px);opacity:1;}}
+
+/* WELCOME */
+.welcome{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px;box-shadow:0 1px 4px rgba(0,40,120,0.06);}
+.wtitle{font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;color:var(--blue);margin-bottom:5px;}
+.wsub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:15px;}
+.qrow{display:flex;flex-wrap:wrap;gap:7px;}
+.qbtn{font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all 0.12s;font-family:inherit;}
+.qbtn:hover{background:var(--blue);border-color:var(--blue);color:white;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,102,255,0.18);}
+
+/* INPUT */
+.input-area{background:var(--surface);border-top:1px solid var(--border);padding:13px 18px;flex-shrink:0;}
+.fpreview{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.fp{display:flex;align-items:center;gap:5px;background:var(--blue-bg);border:1px solid rgba(0,102,255,0.2);border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:600;color:var(--blue);}
+.fp button{background:none;border:none;cursor:pointer;color:var(--blue);font-size:14px;opacity:0.5;}
+.fp button:hover{opacity:1;}
+.irow{display:flex;gap:8px;align-items:flex-end;}
+.ubtn{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all 0.12s;flex-shrink:0;}
+.ubtn:hover{background:var(--blue-bg);border-color:rgba(0,102,255,0.3);}
+textarea{width:100%;border:1.5px solid var(--border);border-radius:11px;padding:10px 13px;font-family:inherit;font-size:13.5px;color:var(--text);background:var(--surface2);resize:none;outline:none;min-height:42px;max-height:128px;line-height:1.5;transition:border-color 0.12s;}
+textarea:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(0,102,255,0.07);}
+textarea::placeholder{color:var(--muted);}
+.sbtn{width:42px;height:42px;border-radius:11px;border:none;background:var(--blue);color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;transition:all 0.12s;box-shadow:0 2px 10px rgba(0,102,255,0.28);}
+.sbtn:hover{background:var(--blue-d);transform:translateY(-1px);}
+.sbtn:disabled{background:var(--border);box-shadow:none;transform:none;cursor:not-allowed;}
+.hint{font-size:11px;color:var(--muted);margin-top:7px;text-align:center;font-weight:500;}
+#finput{display:none;}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:sp 0.65s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">DellSide<span>Digital</span></div>
+  <div class="crew-pill"><div class="sdot"></div><span id="crew-lbl">12 Agents Ready</span></div>
+</div>
+
+<!-- API BANNER -->
+<div class="apibanner" id="apibanner">
+  <span>🔑 <strong>Paste your Anthropic API key</strong> to activate your crew:</span>
+  <input type="password" id="apikey" placeholder="sk-ant-api03-..." />
+  <button class="abtn" onclick="saveKey()">Activate ✓</button>
+  <button class="abtn g" onclick="skipKey()">Skip — demo mode</button>
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="backdrop" id="modal" onclick="outsideClose(event)">
+  <div class="modal">
+    <div class="modal-title">➕ Add a New Client</div>
+    <div class="modal-sub">Fill in what you know. Svetlana will set up their full profile and Asana structure automatically.</div>
+    <label class="flabel">Client Name *</label>
+    <input class="finput" id="cname" placeholder="e.g. Riverside Brewing Co." />
+    <label class="flabel">Industry — pick one</label>
+    <div class="ind-grid">
+      <div class="iopt" onclick="pickInd(this)">🎉 Entertainment</div>
+      <div class="iopt" onclick="pickInd(this)">🍔 Food & Beverage</div>
+      <div class="iopt" onclick="pickInd(this)">🏠 Home Services</div>
+      <div class="iopt" onclick="pickInd(this)">💼 Professional Services</div>
+      <div class="iopt" onclick="pickInd(this)">🛒 E-Commerce</div>
+      <div class="iopt" onclick="pickInd(this)">🏋️ Health & Fitness</div>
+      <div class="iopt" onclick="pickInd(this)">🏡 Real Estate</div>
+      <div class="iopt" onclick="pickInd(this)">✨ Other</div>
+    </div>
+    <label class="flabel">Location (optional)</label>
+    <input class="finput" id="cloc" placeholder="e.g. Milwaukee, WI" />
+    <label class="flabel">One-sentence description (optional)</label>
+    <input class="finput" id="cdesc" placeholder="e.g. Craft brewery with taproom, events, and retail" />
+    <div class="macts">
+      <button class="btns" onclick="closeModal()">Cancel</button>
+      <button class="btnp" onclick="addClient()">Add Client to Crew ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-top"><div class="sb-lbl">The Gallagher Crew</div></div>
+    <div class="agents-scroll">
+      <div class="sec">Leadership</div>
+      <div class="arow active" id="row-fiona" onclick="selAgent('fiona')">
+        <div class="av" style="background:linear-gradient(135deg,#0066FF,#0047CC)">F<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Fiona Gallagher</div><div class="arole">Strategy Lead</div></div>
+        <div class="aright"><div class="obadge">1st</div><div class="sbadge idle" id="sb-fiona">Ready</div></div>
+      </div>
+      <div class="arow" id="row-mandy" onclick="selAgent('mandy')">
+        <div class="av" style="background:linear-gradient(135deg,#7C3AED,#5B21B6)">M<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Mandy Gallagher</div><div class="arole">Research & Intel</div></div>
+        <div class="aright"><div class="obadge">2nd</div><div class="sbadge idle" id="sb-mandy">Ready</div></div>
+      </div>
+      <div class="arow" id="row-frank" onclick="selAgent('frank')">
+        <div class="av" style="background:linear-gradient(135deg,#F59E0B,#D97706)">Fr<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Frank Gallagher</div><div class="arole">Content Strategist</div></div>
+        <div class="aright"><div class="obadge">3rd</div><div class="sbadge idle" id="sb-frank">Ready</div></div>
+      </div>
+
+      <div class="div"></div><div class="sec">Execution Crew</div>
+      <div class="arow" id="row-ian" onclick="selAgent('ian')">
+        <div class="av" style="background:linear-gradient(135deg,#10B981,#059669)">I<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Ian Gallagher</div><div class="arole">Social Media</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-ian">Ready</div></div>
+      </div>
+      <div class="arow" id="row-lip" onclick="selAgent('lip')">
+        <div class="av" style="background:linear-gradient(135deg,#EF4444,#DC2626)">L<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Lip Gallagher</div><div class="arole">Paid Ads</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-lip">Ready</div></div>
+      </div>
+      <div class="arow" id="row-carl" onclick="selAgent('carl')">
+        <div class="av" style="background:linear-gradient(135deg,#F97316,#EA580C)">C<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Carl Gallagher</div><div class="arole">Copywriter</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-carl">Ready</div></div>
+      </div>
+      <div class="arow" id="row-debbie" onclick="selAgent('debbie')">
+        <div class="av" style="background:linear-gradient(135deg,#EC4899,#DB2777)">D<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Debbie Gallagher</div><div class="arole">Email Marketing</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-debbie">Ready</div></div>
+      </div>
+      <div class="arow" id="row-liam" onclick="selAgent('liam')">
+        <div class="av" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">Li<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Liam Gallagher</div><div class="arole">SEO</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-liam">Ready</div></div>
+      </div>
+
+      <div class="div"></div><div class="sec">Output & Delivery</div>
+      <div class="arow" id="row-kev" onclick="selAgent('kev')">
+        <div class="av" style="background:linear-gradient(135deg,#64748B,#475569)">K<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Kevin Ball</div><div class="arole">Analytics & Reporting</div></div>
+        <div class="aright"><div class="obadge">5th</div><div class="sbadge idle" id="sb-kev">Ready</div></div>
+      </div>
+      <div class="arow" id="row-vee" onclick="selAgent('vee')">
+        <div class="av" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)">V<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Veronica Fisher</div><div class="arole">Creative Direction</div></div>
+        <div class="aright"><div class="obadge">5th</div><div class="sbadge idle" id="sb-vee">Ready</div></div>
+      </div>
+      <div class="arow" id="row-svetlana" onclick="selAgent('svetlana')">
+        <div class="av" style="background:linear-gradient(135deg,#0A2080,#0A1628)">S<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Svetlana</div><div class="arole">Onboarding & Web</div></div>
+        <div class="aright"><div class="obadge">6th</div><div class="sbadge idle" id="sb-svetlana">Ready</div></div>
+      </div>
+
+      <div class="div"></div><div class="sec">Quality Control</div>
+      <div class="arow qa-agent" id="row-monica" onclick="selAgent('monica')">
+        <div class="av" style="background:linear-gradient(135deg,#DC2626,#991B1B)">Mo<div class="ring"></div></div>
+        <div class="ainfo"><div class="aname">Monica Gallagher</div><div class="arole">QA — Standards & Review</div></div>
+        <div class="aright"><div class="obadge qa">QA</div><div class="sbadge idle" id="sb-monica">Ready</div></div>
+      </div>
+    </div>
+
+    <!-- CLIENT SECTION -->
+    <div class="client-sec">
+      <div class="client-hdr">
+        <div class="client-hdr-lbl">Active Client</div>
+        <button class="add-btn" onclick="openModal()">+ New Client</button>
+      </div>
+      <div class="chips" id="chips">
+        <div class="chip active" onclick="selClient(this,'Knuckleheads')">Knuckleheads</div>
+        <div class="chip" onclick="selClient(this,'Booby Trap')">Booby Trap</div>
+        <div class="chip" onclick="selClient(this,'Tommy Salamis')">Tommy Salamis</div>
+        <div class="chip" onclick="selClient(this,'Lynch')">Lynch</div>
+        <div class="chip" onclick="selClient(this,'General')">General</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="chat-hdr">
+      <div class="hav" id="hav" style="background:linear-gradient(135deg,#0066FF,#0047CC)">F<div class="wind"></div></div>
+      <div class="hinfo">
+        <div class="hname" id="hname">Fiona Gallagher</div>
+        <div class="hdesc" id="hdesc">Strategy Lead — sets direction, briefs the crew, weekly check-ins</div>
+      </div>
+      <div class="htags">
+        <div class="htag" id="otag">Runs 1st</div>
+        <div class="htag" id="ctag">Knuckleheads</div>
+        <div class="wtag" id="wtag">⚡ Working...</div>
+      </div>
+    </div>
+
+    <div class="msgs" id="msgs">
+      <div class="welcome">
+        <div class="wtitle">Hey Allie! The crew is ready. 👋</div>
+        <div class="wsub">
+          Chat with any agent on the left. Every output goes through <strong>Monica's QA review</strong> automatically.
+          If she flags issues, it goes back to the agent for revisions. Once Monica approves, <strong>you get the final say</strong> with an Approve button.
+          Nothing goes out without your thumbs up.
+        </div>
+        <div class="qrow" id="qrow">
+          <button class="qbtn" onclick="sendQ(this)">Write 5 posts for this week</button>
+          <button class="qbtn" onclick="sendQ(this)">Research top competitors</button>
+          <button class="qbtn" onclick="sendQ(this)">Build a content calendar</button>
+          <button class="qbtn" onclick="sendQ(this)">Write Meta ad copy</button>
+          <button class="qbtn" onclick="sendQ(this)">Onboard a new client</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="fpreview" id="fpreview"></div>
+      <div class="irow">
+        <button class="ubtn" title="Upload a file" onclick="document.getElementById('finput').click()">📎</button>
+        <textarea id="tinput" placeholder="Ask Fiona anything about your client strategy..." rows="1" onkeydown="hkey(event)" oninput="resize(this)"></textarea>
+        <button class="sbtn" id="sbtn" onclick="send()">➤</button>
+      </div>
+      <div class="hint">Enter to send · Shift+Enter for new line · 📎 to upload files</div>
+    </div>
+    <input type="file" id="finput" multiple accept=".txt,.pdf,.md,.csv,.json,.doc,.docx" onchange="handleFiles(event)" />
+  </div>
+</div>
+
+<script>
+// ── AGENTS ──
+const A = {
+  fiona:    {n:'Fiona Gallagher',  r:'Strategy Lead',        d:'Sets direction, briefs the crew, weekly check-ins', av:'F',  c:'linear-gradient(135deg,#0066FF,#0047CC)', o:'Runs 1st', ph:'Ask Fiona for strategy, campaign direction, or a full client plan...', qa:true,
+    sys:`You are Fiona Gallagher, Strategy Lead at DellSide Digital (Wisconsin), run by Allie Keesee. Set strategic direction: goals, audience, positioning, priorities. Brief the crew. Rules: No em dashes. Max 3 hashtags. Instagram=Facebook always. Output a clear strategy summary with priorities, audience notes, next steps.`},
+  mandy:    {n:'Mandy Gallagher',  r:'Research & Intel',     d:'Competitor research, industry news, local market intel', av:'M',  c:'linear-gradient(135deg,#7C3AED,#5B21B6)', o:'Runs 2nd', ph:'Ask Mandy to research competitors, trends, or local market intel...', qa:true,
+    sys:`You are Mandy Gallagher, Research & Intel at DellSide Digital, run by Allie Keesee. Research: top 3-5 competitors (social/ads/messaging), industry trends, local events/seasonal context, customer language. Output a specific actionable Research Brief — no vague summaries.`},
+  frank:    {n:'Frank Gallagher',  r:'Content Strategist',   d:'Content pillars, campaign concepts, seasonal ideas', av:'Fr', c:'linear-gradient(135deg,#F59E0B,#D97706)', o:'Runs 3rd', ph:'Ask Frank for content pillars, campaign concepts, or big creative ideas...', qa:true,
+    sys:`You are Frank Gallagher, Content Strategist at DellSide Digital, run by Allie Keesee. Define 3-5 content pillars per brand, conceptualize campaigns, map seasonal opportunities. No em dashes. Output: pillars, campaign concepts, creative direction memo.`},
+  ian:      {n:'Ian Gallagher',    r:'Social Media Manager', d:'Captions, content calendars, platform voice', av:'I',  c:'linear-gradient(135deg,#10B981,#059669)', o:'Runs 4th', ph:'Ask Ian to write captions, content calendars, or a caption bank...', qa:true,
+    sys:`You are Ian Gallagher, Social Media Manager at DellSide Digital, run by Allie Keesee. CRITICAL RULES: NO em dashes ever. Exactly 3 hashtags per post — not 2, not 4. Instagram = Facebook always, identical copy. Captions: 1-3 lines unless asked longer. Match brand voice exactly per client.`},
+  lip:      {n:'Lip Gallagher',    r:'Paid Ads Strategist',  d:'Meta campaigns, ad copy, targeting, performance', av:'L',  c:'linear-gradient(135deg,#EF4444,#DC2626)', o:'Runs 4th', ph:'Ask Lip for Meta ad copy, campaign structure, or performance analysis...', qa:true,
+    sys:`You are Lip Gallagher, Paid Ads Strategist at DellSide Digital, run by Allie Keesee. Meta ad strategy, minimum 3 copy variations, audience targeting, budget pacing, performance analysis. PAS or BAB frameworks. Track: hook rate, hold rate, CTR, CPC, CPM, frequency, ROAS. No em dashes.`},
+  carl:     {n:'Carl Gallagher',   r:'Copywriter',           d:'Hooks, headlines, CTAs — direct and punchy', av:'C',  c:'linear-gradient(135deg,#F97316,#EA580C)', o:'Runs 4th', ph:'Ask Carl to write copy, hooks, headlines, or brand messaging...', qa:true,
+    sys:`You are Carl Gallagher, Copywriter at DellSide Digital, run by Allie Keesee. Hooks, headlines, CTAs, offer framing, ad copy. Direct, punchy, zero fluff. No em dashes. Specific CTAs not generic. Match brand voice per client exactly.`},
+  debbie:   {n:'Debbie Gallagher', r:'Email Marketing',      d:'Sequences, welcome series, newsletters', av:'D',  c:'linear-gradient(135deg,#EC4899,#DB2777)', o:'Runs 4th', ph:'Ask Debbie to write email sequences, welcome series, or newsletters...', qa:true,
+    sys:`You are Debbie Gallagher, Email Marketing at DellSide Digital, run by Allie Keesee. Sequences, welcome series, newsletters, drip campaigns. Always include: subject + preview text, single CTA per email, sequence logic. Mobile-first. Knuckleheads: 80K subscribers, $5 wristband offer. No em dashes.`},
+  liam:     {n:'Liam Gallagher',   r:'SEO Specialist',       d:'Local SEO, schema markup, on-page optimization', av:'Li', c:'linear-gradient(135deg,#06B6D4,#0891B2)', o:'Runs 4th', ph:'Ask Liam for SEO audits, local SEO tips, or schema markup...', qa:true,
+    sys:`You are Liam Gallagher, SEO Specialist at DellSide Digital, run by Allie Keesee. Local SEO, on-page optimization, JSON-LD schema, Google Business Profile, SEO audits. Output ready-to-paste JSON-LD. Local: GBP, keywords, NAP consistency, reviews.`},
+  kev:      {n:'Kevin Ball',       r:'Analytics & Reporting',d:'Metrics, weekly reports, client-facing recaps', av:'K',  c:'linear-gradient(135deg,#64748B,#475569)', o:'Runs 5th', ph:'Ask Kev to analyze metrics, build reports, or interpret ad performance...', qa:true,
+    sys:`You are Kevin Ball, Analytics Lead at DellSide Digital, run by Allie Keesee. Interpret data, build reports, flag wins vs problems, format client recaps. For any data: plain English explanation, top win, top problem, 2-3 action steps, clean client-ready summary. Be honest. No em dashes.`},
+  vee:      {n:'Veronica Fisher',  r:'Creative Direction',   d:'Canva briefs, visual direction, aesthetic guidance', av:'V',  c:'linear-gradient(135deg,#8B5CF6,#7C3AED)', o:'Runs 5th', ph:'Ask Vee for creative direction briefs or Canva guidance...', qa:true,
+    sys:`You are Veronica Fisher, Creative Director at DellSide Digital, run by Allie Keesee. Write Canva creative briefs: dimensions/format, color palette with hex codes, typography, image style, text overlay placement, vibe in 3 words. DellSide: Charged Blue, Nunito/Plus Jakarta Sans, light mode.`},
+  svetlana: {n:'Svetlana',         r:'Onboarding & Web',     d:'Questionnaires, Asana setup, Wix builds', av:'S',  c:'linear-gradient(135deg,#0A2080,#0A1628)', o:'Runs 6th', ph:'Upload a brand questionnaire or ask Svetlana to set up a new client...', qa:false,
+    sys:`You are Svetlana, Onboarding & Web at DellSide Digital, run by Allie Keesee. Process brand questionnaires into structured profiles, set up Asana projects (72-task: Onboarding + Month 1-3), handle Wix audits/builds. Output: Brand Profile, Asana sections + first 10 tasks, flag what's missing. Thorough and organized.`},
+  monica:   {n:'Monica Gallagher', r:'QA — Standards & Review', d:'Reviews all output for brand rules, quality, and strategy alignment', av:'Mo', c:'linear-gradient(135deg,#DC2626,#991B1B)', o:'QA', ph:'Monica reviews all output automatically. You can also ask her to check specific content...', qa:false,
+    sys:`You are Monica Gallagher, Quality Control at DellSide Digital, run by Allie Keesee. You review all content produced by the crew BEFORE it goes to Allie for final approval.
+
+CHECK EVERY PIECE OF CONTENT FOR:
+1. NO em dashes anywhere (— or –) — this is an automatic fail
+2. Exactly 3 hashtags on social posts (not 2, not 4, not 0)
+3. Brand voice match for the specific client
+4. Strategy alignment — does it match what was briefed?
+5. Quality and clarity — is this actually good work?
+6. No generic or weak CTAs
+7. Spelling and grammar
+
+YOUR RESPONSE FORMAT — always respond in this exact structure:
+
+VERDICT: [APPROVED or NEEDS REVISION]
+
+WHAT'S WORKING:
+- [list 2-3 genuine positives]
+
+[If NEEDS REVISION:]
+ISSUES TO FIX:
+- [specific issue 1]
+- [specific issue 2]
+
+REVISION NOTES FOR [AGENT NAME]:
+[Clear, specific instructions for what to fix]
+
+[If APPROVED:]
+READY FOR ALLIE'S FINAL APPROVAL.
+This meets all DellSide brand standards and is ready to go.
+
+Be strict. Be specific. Your job is to catch everything before it reaches the client.`}
+};
+
+const QP = {
+  fiona:['Build a strategy brief','Weekly client check-in','Prioritize this week','Set campaign direction'],
+  mandy:['Research top competitors','Find industry trends','Local events for content','Competitor ad analysis'],
+  frank:['Define content pillars','Campaign concept ideas','Seasonal opportunities','Creative direction memo'],
+  ian:['Write 5 posts for this week','Build a monthly calendar','Caption bank for 2 weeks','Reel ideas'],
+  lip:['Write 3 Meta ad variations','Analyze my ad metrics','Audience targeting tips','Campaign structure'],
+  carl:['5 scroll-stopping hooks','Ad copy with strong CTA','Offer framing','Rewrite this headline'],
+  debbie:['Welcome email sequence','Monthly newsletter','Re-engagement campaign','Promo email'],
+  liam:['Local SEO audit','Schema markup','Google Business Profile tips','Keyword recommendations'],
+  kev:['Analyze my ad performance','Build a weekly report','What metrics to track','Client-facing recap'],
+  vee:['Creative brief for a post','Brand style guide','Canva direction for ads','Visual campaign concept'],
+  svetlana:['Process a brand questionnaire','Set up Asana for new client','Wix audit checklist','Onboarding checklist'],
+  monica:['Review Ian\'s latest post draft','Check this ad copy','Review this email','Full QA on this content']
+};
+
+// ── STATE ──
+let cur = 'fiona';
+let client = 'Knuckleheads';
+let hist = {};
+let files = [];
+let selInd = '';
+let apiKey = localStorage.getItem('dd_key') || '';
+// QA state per conversation key
+let qaState = {}; // key -> {draft, agentId, round, status}
+
+if (apiKey) document.getElementById('apibanner').style.display='none';
+
+// ── AGENT SELECT ──
+function selAgent(id) {
+  document.querySelectorAll('.arow').forEach(r=>r.classList.remove('active'));
+  document.getElementById('row-'+id).classList.add('active');
+  cur = id;
+  const ag = A[id];
+  const hav = document.getElementById('hav');
+  hav.style.background = ag.c;
+  hav.innerHTML = ag.av + '<div class="wind"></div>';
+  document.getElementById('hname').textContent = ag.n;
+  document.getElementById('hdesc').textContent = ag.d;
+  document.getElementById('otag').textContent = ag.o;
+  document.getElementById('tinput').placeholder = ag.ph;
+  renderMsgs();
+}
+
+// ── CLIENT SELECT ──
+function selClient(el, name) {
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  client = name;
+  document.getElementById('ctag').textContent = name;
+  renderMsgs();
+}
+
+// ── MODAL ──
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  ['cname','cloc','cdesc'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.iopt').forEach(o=>o.classList.remove('sel'));
+  selInd='';
+}
+function outsideClose(e){if(e.target.id==='modal')closeModal();}
+function pickInd(el){document.querySelectorAll('.iopt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');selInd=el.textContent.replace(/^.\s/,'').trim();}
+function addClient(){
+  const name=document.getElementById('cname').value.trim();
+  if(!name){const inp=document.getElementById('cname');inp.style.borderColor='#EF4444';inp.focus();setTimeout(()=>inp.style.borderColor='',1600);return;}
+  const loc=document.getElementById('cloc').value.trim();
+  const desc=document.getElementById('cdesc').value.trim();
+  const chips=document.getElementById('chips');
+  const chip=document.createElement('div');
+  chip.className='chip';
+  const sn=name.replace(/'/g,"\\'");
+  chip.innerHTML=name+` <span class="cx" onclick="rmClient(event,this.parentElement,'${sn}')">×</span>`;
+  chip.onclick=function(e){if(e.target.classList.contains('cx'))return;selClient(this,name);};
+  chips.appendChild(chip);
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  client=name;
+  document.getElementById('ctag').textContent=name;
+  closeModal();
+  selAgent('svetlana');
+  const parts=[`New client added: ${name}`];
+  if(selInd)parts.push(`Industry: ${selInd}`);
+  if(loc)parts.push(`Location: ${loc}`);
+  if(desc)parts.push(`About: ${desc}`);
+  parts.push('Please create the initial brand profile and Asana project structure.');
+  document.getElementById('tinput').value=parts.join('\n');
+  resize(document.getElementById('tinput'));
+  toast(`✅ ${name} added! Svetlana is ready to build their profile.`);
+}
+function rmClient(e,chip,name){e.stopPropagation();chip.remove();if(client===name){client='General';document.getElementById('ctag').textContent='General';const f=document.querySelector('.chip');if(f)f.classList.add('active');}}
+
+// ── STATUS ──
+function setWorking(id){
+  const row=document.getElementById('row-'+id);const badge=document.getElementById('sb-'+id);
+  if(row)row.classList.add('working');
+  const label=id==='monica'?'Reviewing...':'Working...';
+  const cls=id==='monica'?'reviewing':'working';
+  if(badge){badge.className='sbadge '+cls;badge.textContent=label;}
+  if(id===cur){document.getElementById('hav').classList.add('working');document.getElementById('wtag').style.display='flex';}
+  document.getElementById('crew-lbl').textContent=id==='monica'?'Monica Reviewing...':'Crew Working...';
+}
+function setDone(id){
+  const row=document.getElementById('row-'+id);const badge=document.getElementById('sb-'+id);
+  if(row)row.classList.remove('working');
+  if(badge){badge.className='sbadge done';badge.textContent='Done ✓';}
+  if(id===cur){document.getElementById('hav').classList.remove('working');document.getElementById('wtag').style.display='none';}
+  setTimeout(()=>resetSt(id),4000);
+}
+function resetSt(id){
+  const row=document.getElementById('row-'+id);const badge=document.getElementById('sb-'+id);
+  if(row)row.classList.remove('working');
+  if(badge){badge.className='sbadge idle';badge.textContent='Ready';}
+  document.getElementById('crew-lbl').textContent='12 Agents Ready';
+}
+
+// ── FILES ──
+function handleFiles(e){
+  Array.from(e.target.files).forEach(f=>{
+    files.push(f);
+    const p=document.createElement('div');p.className='fp';p.dataset.n=f.name;
+    p.innerHTML=`📄 ${f.name} <button onclick="rmFile('${f.name}',this.parentElement)">×</button>`;
+    document.getElementById('fpreview').appendChild(p);
+  });
+  e.target.value='';
+}
+function rmFile(name,el){files=files.filter(f=>f.name!==name);el.remove();}
+async function readF(f){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>res(`[Error: ${f.name}]`);r.readAsText(f);});}
+
+// ── API CALL ──
+async function callAPI(systemPrompt, messages) {
+  if (!apiKey) {
+    await new Promise(r=>setTimeout(r,1200));
+    return `[Demo mode — paste your API key to activate real responses]`;
+  }
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:systemPrompt,messages})
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content?.find(b=>b.type==='text')?.text || 'No response.';
+}
+
+// ── SEND ──
+function hkey(k){if(k.key==='Enter'&&!k.shiftKey){k.preventDefault();send();}}
+function convoKey(){return `${cur}::${client}`;}
+function getH(){if(!hist[convoKey()])hist[convoKey()]=[];return hist[convoKey()];}
+function sendQ(btn){document.getElementById('tinput').value=btn.textContent;send();}
+
+async function send(){
+  const ti=document.getElementById('tinput');
+  const text=ti.value.trim();
+  if(!text&&files.length===0)return;
+
+  const sbtn=document.getElementById('sbtn');
+  sbtn.disabled=true;sbtn.innerHTML='<div class="spin"></div>';
+
+  let fts=[];
+  for(const f of files){const t=await readF(f);fts.push(`--- FILE: ${f.name} ---\n${t}\n--- END FILE ---`);}
+  const full=fts.length?(text?`${text}\n\n${fts.join('\n\n')}`:fts.join('\n\n')):text;
+
+  addUserMsg(text,files.map(f=>f.name));
+  ti.value='';files=[];document.getElementById('fpreview').innerHTML='';resize(ti);
+
+  const typing=showTyping();
+  setWorking(cur);
+  const h=getH();
+  h.push({role:'user',content:full});
+
+  try {
+    const ag=A[cur];
+    const sys=`${ag.sys}\n\nActive client: ${client}. Occasionally address Allie by name. Be specific and actionable. Never use em dashes.`;
+    const reply = await callAPI(sys, h);
+    h.push({role:'assistant',content:reply});
+    typing.remove();
+    setDone(cur);
+    addAgentMsg(reply);
+
+    // Trigger QA if this agent has QA enabled and it's not Monica or Svetlana
+    if(ag.qa && cur!=='monica' && cur!=='svetlana'){
+      setTimeout(()=>runQA(reply, cur, 1), 600);
+    }
+
+  } catch(err){
+    typing.remove();resetSt(cur);
+    addAgentMsg(`Something went wrong: ${err.message}`);
+  }
+  sbtn.disabled=false;sbtn.innerHTML='➤';
+}
+
+// ── QA PIPELINE ──
+async function runQA(draft, originAgentId, round) {
+  const msgs=document.getElementById('msgs');
+
+  // Show Monica reviewing
+  setWorking('monica');
+  const monicaTyping=showTypingFor('monica');
+
+  const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round ${round} of 2.`;
+  const reviewMsg = `Please review this content produced by ${A[originAgentId].n} for client ${client}:\n\n---\n${draft}\n---\n\nProvide your verdict following your exact response format.`;
+
+  try {
+    const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}]);
+    monicaTyping.remove();
+    setDone('monica');
+
+    const approved = verdict.includes('VERDICT: APPROVED');
+    showQACard(verdict, approved, draft, originAgentId, round);
+
+  } catch(err){
+    monicaTyping.remove();resetSt('monica');
+    addAgentMsg(`Monica ran into an issue: ${err.message}`);
+  }
+}
+
+function showQACard(verdict, approved, draft, originAgentId, round){
+  const msgs=document.getElementById('msgs');
+  const card=document.createElement('div');
+  card.className=`qa-card ${approved?'approved':'flagged'}`;
+
+  if(approved){
+    card.innerHTML=`
+      <div class="qa-header"><div class="qa-icon">✅</div><div class="qa-title">Monica's QA: APPROVED — Round ${round}</div></div>
+      <div class="qa-body">${md(verdict.replace('VERDICT: APPROVED',''))}</div>
+      <div class="qa-actions">
+        <button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve & Mark Final</button>
+        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${encodeURIComponent(draft)}')">✏️ Request a Tweak</button>
+      </div>
+      <div class="qa-round">Monica approved · Round ${round}/2 · Awaiting your final approval, Allie</div>`;
+  } else {
+    card.innerHTML=`
+      <div class="qa-header"><div class="qa-icon">🔁</div><div class="qa-title">Monica's QA: NEEDS REVISION — Round ${round}</div></div>
+      <div class="qa-body">${md(verdict.replace('VERDICT: NEEDS REVISION',''))}</div>
+      <div class="qa-actions">
+        ${round < 2
+          ? `<button class="qa-btn send-revision" onclick="sendRevision(this,'${originAgentId}','${encodeURIComponent(verdict)}',${round})">🔁 Send Back to ${A[originAgentId].n}</button>`
+          : `<button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve Anyway (Override)</button>`
+        }
+        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${encodeURIComponent(draft)}')">✏️ I'll Give Specific Notes</button>
+      </div>
+      <div class="qa-round">${round < 2 ? `Round ${round}/2 · One revision round remaining` : `Round 2/2 · Max revisions reached — your call, Allie`}</div>`;
+  }
+  msgs.appendChild(card);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function sendRevision(btn, originAgentId, encodedVerdict, round){
+  btn.disabled=true;btn.textContent='Sending back...';
+  const verdict=decodeURIComponent(encodedVerdict);
+  const card=btn.closest('.qa-card');
+
+  // Replace card with "sending" state
+  card.className='qa-card reviewing';
+  card.innerHTML=`<div class="qa-header"><div class="qa-icon">🔁</div><div class="qa-title">Sending back to ${A[originAgentId].n}...</div></div><div class="qa-body">Monica's notes are on their way. ${A[originAgentId].n} will revise and resubmit.</div>`;
+
+  const ag=A[originAgentId];
+  const revisionTyping=showTypingFor(originAgentId);
+  setWorking(originAgentId);
+
+  const revSys=`${ag.sys}\n\nActive client: ${client}. You are revising your previous output based on QA feedback. Never use em dashes.`;
+  const revMsg=`Your previous output was reviewed by Monica (QA). Here is her feedback:\n\n${verdict}\n\nPlease revise your output to address all of Monica's notes. Produce the corrected version now.`;
+
+  try {
+    const revised=await callAPI(revSys,[{role:'user',content:revMsg}]);
+    revisionTyping.remove();
+    setDone(originAgentId);
+
+    // Show revised output
+    card.remove();
+    addAgentMsgFor(originAgentId, `📝 **Revised (Round ${round+1}):**\n\n${revised}`);
+
+    // Run QA again
+    setTimeout(()=>runQA(revised, originAgentId, round+1), 600);
+
+  } catch(err){
+    revisionTyping.remove();resetSt(originAgentId);
+    card.remove();
+    addAgentMsg(`Revision failed: ${err.message}`);
+  }
+}
+
+function finalApprove(btn, agentId){
+  const card=btn.closest('.qa-card');
+  card.className='qa-card final';
+  card.innerHTML=`
+    <div class="qa-header"><div class="qa-icon">🎉</div><div class="qa-title">FINAL APPROVED — Ready to Use</div></div>
+    <div class="qa-body">You approved this output, Allie. It's ready to copy, schedule, or send to the client. Monica's standards met. Job done.</div>
+    <div class="qa-round">Approved by Allie · ${A[agentId].n} · ${client} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`;
+  toast('🎉 Approved and finalized! Ready to use.');
+}
+
+function requestTweak(btn, agentId, encodedDraft){
+  const card=btn.closest('.qa-card');
+  const draft=decodeURIComponent(encodedDraft);
+  // Switch chat to original agent
+  selAgent(agentId);
+  document.getElementById('tinput').value=`Please make this tweak to the output you produced:\n\n`;
+  document.getElementById('tinput').focus();
+  resize(document.getElementById('tinput'));
+  toast(`Switched to ${A[agentId].n}. Type your specific tweak request.`);
+}
+
+// ── MESSAGE RENDERING ──
+function addUserMsg(text,fnames){
+  const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='msg user';
+  const fps=fnames.map(n=>`<div class="fpill-msg">📄 ${n}</div>`).join('');
+  d.innerHTML=`<div class="mav uav">AK</div><div class="mbody"><div class="mwho">Allie</div><div class="bub">${fps}${esc(text)}</div></div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function addAgentMsg(text){addAgentMsgFor(cur,text);}
+function addAgentMsgFor(id,text){
+  const ag=A[id];const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='msg';
+  d.innerHTML=`<div class="mav" style="background:${ag.c}">${ag.av}</div><div class="mbody"><div class="mwho">${ag.n}</div><div class="bub">${md(text)}</div></div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function showTyping(){return showTypingFor(cur);}
+function showTypingFor(id){
+  const ag=A[id];const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='trow';
+  d.innerHTML=`<div class="mav" style="background:${ag.c}">${ag.av}</div><div class="tbub"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;
+}
+
+function renderMsgs(){
+  const msgs=document.getElementById('msgs');
+  msgs.innerHTML=`<div class="welcome"><div class="wtitle">Hey Allie! The crew is ready. 👋</div><div class="wsub">Chat with any agent. Every output goes through <strong>Monica's QA</strong> automatically. If she flags issues it goes back to the agent for revisions. Once Monica approves, <strong>you get the final say</strong> — nothing goes out without your thumbs up.</div><div class="qrow" id="qrow"></div></div>`;
+  const qrow=document.getElementById('qrow');
+  (QP[cur]||[]).forEach(q=>{const b=document.createElement('button');b.className='qbtn';b.textContent=q;b.onclick=()=>sendQ(b);qrow.appendChild(b);});
+  if(hist[convoKey()]){hist[convoKey()].forEach(m=>{if(m.role==='user')addUserMsg(m.content,[]);else addAgentMsg(m.content);});}
+}
+
+// ── API KEY ──
+function saveKey(){const v=document.getElementById('apikey').value.trim();if(v){apiKey=v;localStorage.setItem('dd_key',v);document.getElementById('apibanner').style.display='none';toast('✅ API key saved! Your crew is fully activated.');}}
+function skipKey(){document.getElementById('apibanner').style.display='none';toast('Running in demo mode. Paste your API key anytime.');}
+
+// ── HELPERS ──
+function md(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3} (.+)$/gm,'<strong>$1</strong>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*?<\/li>(\n|$))+/g,m=>`<ul>${m}</ul>`)
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,128)+'px';}
+function toast(msg){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#0A0F1E;color:white;font-size:13px;font-weight:600;padding:11px 22px;border-radius:30px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.25);font-family:inherit;';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+renderMsgs();
+</script>
+</body>
+</html>
