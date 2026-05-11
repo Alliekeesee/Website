@@ -266,24 +266,24 @@ textarea::placeholder{color:var(--muted);}
       <div class="arow active" id="row-fiona" onclick="selAgent('fiona')">
         <div class="av" style="background:linear-gradient(135deg,#0066FF,#0047CC)">F<div class="ring"></div></div>
         <div class="ainfo"><div class="aname">Fiona Gallagher</div><div class="arole">Strategy Lead</div></div>
-        <div class="aright"><div class="obadge">2nd</div><div class="sbadge idle" id="sb-fiona">Ready</div></div>
+        <div class="aright"><div class="obadge">2nd</div><div class="obadge" style="color:#0891B2;background:rgba(8,145,178,0.1)">🌐</div><div class="sbadge idle" id="sb-fiona">Ready</div></div>
       </div>
       <div class="arow" id="row-mandy" onclick="selAgent('mandy')">
         <div class="av" style="background:linear-gradient(135deg,#7C3AED,#5B21B6)">M<div class="ring"></div></div>
         <div class="ainfo"><div class="aname">Mandy Gallagher</div><div class="arole">Research & Social Audit</div></div>
-        <div class="aright"><div class="obadge">3rd</div><div class="sbadge idle" id="sb-mandy">Ready</div></div>
+        <div class="aright"><div class="obadge">3rd</div><div class="obadge" style="color:#0891B2;background:rgba(8,145,178,0.1)">🌐</div><div class="sbadge idle" id="sb-mandy">Ready</div></div>
       </div>
       <div class="arow" id="row-frank" onclick="selAgent('frank')">
         <div class="av" style="background:linear-gradient(135deg,#F59E0B,#D97706)">Fr<div class="ring"></div></div>
         <div class="ainfo"><div class="aname">Frank Gallagher</div><div class="arole">Content Strategist</div></div>
-        <div class="aright"><div class="obadge">4th</div><div class="sbadge idle" id="sb-frank">Ready</div></div>
+        <div class="aright"><div class="obadge">4th</div><div class="obadge" style="color:#0891B2;background:rgba(8,145,178,0.1)">🌐</div><div class="sbadge idle" id="sb-frank">Ready</div></div>
       </div>
 
       <div class="div"></div><div class="sec">Execution Crew</div>
       <div class="arow" id="row-ian" onclick="selAgent('ian')">
         <div class="av" style="background:linear-gradient(135deg,#10B981,#059669)">I<div class="ring"></div></div>
         <div class="ainfo"><div class="aname">Ian Gallagher</div><div class="arole">Social Media</div></div>
-        <div class="aright"><div class="obadge">5th</div><div class="sbadge idle" id="sb-ian">Ready</div></div>
+        <div class="aright"><div class="obadge">5th</div><div class="obadge" style="color:#0891B2;background:rgba(8,145,178,0.1)">🌐</div><div class="sbadge idle" id="sb-ian">Ready</div></div>
       </div>
       <div class="arow" id="row-lip" onclick="selAgent('lip')">
         <div class="av" style="background:linear-gradient(135deg,#EF4444,#DC2626)">L<div class="ring"></div></div>
@@ -661,25 +661,45 @@ function handleFiles(e){
 function rmFile(name,el){files=files.filter(f=>f.name!==name);el.remove();}
 async function readF(f){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>res(`[Error: ${f.name}]`);r.readAsText(f);});}
 
+// ── WEB SEARCH ──
+const WEB_SEARCH_AGENTS = new Set(['mandy','fiona','frank','ian']);
+
 // ── API CALL ──
-async function callAPI(systemPrompt, messages) {
+async function callAPI(systemPrompt, messages, useWebSearch = false) {
   if (!apiKey) {
     await new Promise(r=>setTimeout(r,1200));
     return `[Demo mode — paste your API key to activate real responses]`;
   }
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:systemPrompt,messages})
-  });
-  const data = await res.json();
-  if(data.error) throw new Error(data.error.message);
-  return data.content?.find(b=>b.type==='text')?.text || 'No response.';
+  const headers = {
+    'Content-Type':'application/json',
+    'x-api-key': apiKey,
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+  const bodyBase = {
+    model:'claude-sonnet-4-6',
+    max_tokens:2000,
+    system:systemPrompt
+  };
+  if (useWebSearch) {
+    bodyBase.tools = [{type:'web_search_20250305', name:'web_search', max_uses:5}];
+  }
+  let msgs = [...messages];
+  for (let turn = 0; turn < 8; turn++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers,
+      body:JSON.stringify({...bodyBase, messages:msgs})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const toolUses = data.content?.filter(b=>b.type==='tool_use') || [];
+    if (!toolUses.length || data.stop_reason==='end_turn') {
+      return data.content?.find(b=>b.type==='text')?.text || 'No response.';
+    }
+    msgs.push({role:'assistant', content:data.content});
+    msgs.push({role:'user', content:toolUses.map(b=>({type:'tool_result',tool_use_id:b.id,content:''}))});
+  }
+  return 'No response.';
 }
 
 // ── SEND ──
@@ -711,7 +731,7 @@ async function send(){
   try {
     const ag=A[cur];
     const sys=`${ag.sys}\n\nActive client: ${client}. Occasionally address Allie by name. Be specific and actionable. Never use em dashes.`;
-    const reply = await callAPI(sys, h);
+    const reply = await callAPI(sys, h, WEB_SEARCH_AGENTS.has(cur));
     h.push({role:'assistant',content:reply});
     typing.remove();
     setDone(cur);
@@ -802,7 +822,7 @@ async function sendRevision(btn, originAgentId, encodedVerdict, round){
   const revMsg=`Your previous output was reviewed by Monica (QA). Here is her feedback:\n\n${verdict}\n\nPlease revise your output to address all of Monica's notes. Produce the corrected version now.`;
 
   try {
-    const revised=await callAPI(revSys,[{role:'user',content:revMsg}]);
+    const revised=await callAPI(revSys,[{role:'user',content:revMsg}],WEB_SEARCH_AGENTS.has(originAgentId));
     revisionTyping.remove();
     setDone(originAgentId);
 
