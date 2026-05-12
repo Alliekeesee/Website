@@ -167,6 +167,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .qa-round{font-size:10px;font-weight:700;color:var(--muted);margin-top:8px;}
 
 .fpill-msg{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;margin-bottom:7px;}
+/* BRIEF CARD */
+.brief-card{background:linear-gradient(135deg,var(--blue-bg),rgba(0,102,255,0.04));border:1.5px solid rgba(0,102,255,0.22);border-radius:13px;padding:14px 16px;animation:up 0.25s ease;}
+.brief-from{font-size:10px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--blue);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.brief-body{font-size:12.5px;line-height:1.6;color:var(--text2);max-height:120px;overflow:hidden;position:relative;}
+.brief-body.expanded{max-height:none;}
+.brief-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,var(--blue-bg));pointer-events:none;}
+.brief-body.expanded::after{display:none;}
+.brief-toggle{font-size:11px;font-weight:700;color:var(--blue);background:none;border:none;cursor:pointer;padding:4px 0;font-family:inherit;margin-top:4px;}
 
 /* TYPING */
 .trow{display:flex;gap:10px;animation:up 0.25s ease;}
@@ -584,6 +592,9 @@ function selAgent(id) {
   document.querySelectorAll('.arow').forEach(r=>r.classList.remove('active'));
   document.getElementById('row-'+id).classList.add('active');
   cur = id;
+  // Clear briefed badge on open
+  const badge = document.getElementById('sb-'+id);
+  if (badge && badge.textContent === '📬 Briefed') { badge.style.cssText=''; badge.className='sbadge idle'; badge.textContent='Ready'; }
   const ag = A[id];
   const hav = document.getElementById('hav');
   hav.style.background = ag.c;
@@ -860,6 +871,61 @@ async function sendRevision(btn, originAgentId, encodedVerdict, round){
   }
 }
 
+// ── HANDOFF SYSTEM ──
+const HANDOFF_MAP = {
+  svetlana: ['fiona'],
+  fiona:    ['mandy', 'frank'],
+  mandy:    ['frank'],
+  frank:    ['ian', 'carl'],
+  ian:      [], lip:[]  , carl:[], debbie:[], liam:[], kev:[], vee:[], monica:[]
+};
+
+const HANDOFF_BRIEF = {
+  svetlana: (c,cl) => `BRIEFING FROM SVETLANA — Onboarding complete for ${cl}.\n\nHere is the full brand profile and setup summary:\n\n${c}\n\nPlease review and proceed with your part of the workflow. Do not re-ask for information already captured here.`,
+  fiona:    (c,cl) => `BRIEFING FROM FIONA — Strategy brief approved for ${cl}.\n\n${c}\n\nUse this as your direction. Do not contradict or ignore the strategic priorities set here.`,
+  mandy:    (c,cl) => `BRIEFING FROM MANDY — Research and social audit approved for ${cl}.\n\n${c}\n\nIncorporate these findings into your work. Reference specific data points where relevant.`,
+  frank:    (c,cl) => `BRIEFING FROM FRANK — Content strategy approved for ${cl}.\n\n${c}\n\nBuild everything from these pillars and campaign concepts. Stay on strategy.`
+};
+
+function getLastAgentOutput(agentId) {
+  const msgs = hist[`${agentId}::${client}`] || [];
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i].role === 'assistant') return msgs[i].content;
+  }
+  return '';
+}
+
+function doHandoffs(sourceAgentId) {
+  const targets = HANDOFF_MAP[sourceAgentId] || [];
+  if (!targets.length) return;
+  const briefFn = HANDOFF_BRIEF[sourceAgentId];
+  if (!briefFn) return;
+  const content = getLastAgentOutput(sourceAgentId);
+  if (!content) return;
+  const briefText = briefFn(content, client);
+  targets.forEach(targetId => {
+    const key = `${targetId}::${client}`;
+    if (!hist[key]) hist[key] = [];
+    // Avoid duplicate briefs
+    const alreadyBriefed = hist[key].some(m => m.role === 'user' && m._brief === sourceAgentId);
+    if (!alreadyBriefed) {
+      hist[key].push({role:'user', content:briefText, _brief:sourceAgentId, _briefFrom:A[sourceAgentId].n});
+    }
+  });
+  saveHist();
+  // Badge briefed agents
+  targets.forEach(targetId => {
+    const badge = document.getElementById('sb-'+targetId);
+    if (badge && badge.textContent !== 'Working...' && badge.textContent !== 'Reviewing...') {
+      badge.className = 'sbadge';
+      badge.style.cssText = 'color:#0066FF;background:var(--blue-bg);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;';
+      badge.textContent = '📬 Briefed';
+    }
+  });
+  const names = targets.map(id => A[id].n).join(' and ');
+  toast(`📬 Brief sent to ${names}. Click them when ready — context is already loaded.`);
+}
+
 function finalApprove(btn, agentId){
   const card=btn.closest('.qa-card');
   card.className='qa-card final';
@@ -867,7 +933,8 @@ function finalApprove(btn, agentId){
     <div class="qa-header"><div class="qa-icon">🎉</div><div class="qa-title">FINAL APPROVED — Ready to Use</div></div>
     <div class="qa-body">You approved this output, Allie. It's ready to copy, schedule, or send to the client. Monica's standards met. Job done.</div>
     <div class="qa-round">Approved by Allie · ${A[agentId].n} · ${client} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`;
-  toast('🎉 Approved and finalized! Ready to use.');
+  doHandoffs(agentId);
+  if (!(HANDOFF_MAP[agentId]||[]).length) toast('🎉 Approved and finalized! Ready to use.');
 }
 
 function requestTweak(btn, agentId, encodedDraft){
@@ -890,6 +957,22 @@ function addUserMsg(text,fnames){
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 function addAgentMsg(text){addAgentMsgFor(cur,text);}
+function addBriefCard(fromName, content){
+  const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');d.className='brief-card';
+  const preview=esc(content).slice(0,300).replace(/\n/g,'<br>');
+  const full=esc(content).replace(/\n/g,'<br>');
+  const needsToggle=content.length>300;
+  d.innerHTML=`<div class="brief-from">📬 Incoming brief from ${fromName}</div>
+    <div class="brief-body" id="bb-${Date.now()}">${needsToggle?preview+'...':full}</div>
+    ${needsToggle?`<button class="brief-toggle" onclick="toggleBrief(this)">Show full brief ↓</button>`:''}`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function toggleBrief(btn){
+  const body=btn.previousElementSibling;
+  const expanded=body.classList.toggle('expanded');
+  btn.textContent=expanded?'Collapse ↑':'Show full brief ↓';
+}
 function addAgentMsgFor(id,text){
   const ag=A[id];const msgs=document.getElementById('msgs');
   const d=document.createElement('div');d.className='msg';
@@ -910,7 +993,11 @@ function renderMsgs(){
   msgs.innerHTML=`<div class="welcome"><div class="wtitle">Hey Allie! The crew is ready. 👋</div><div class="wsub">Chat with any agent. Every output goes through <strong>Monica's QA</strong> automatically. If she flags issues it goes back to the agent for revisions. Once Monica approves, <strong>you get the final say</strong> — nothing goes out without your thumbs up.</div><div class="qrow" id="qrow"></div></div>`;
   const qrow=document.getElementById('qrow');
   (QP[cur]||[]).forEach(q=>{const b=document.createElement('button');b.className='qbtn';b.textContent=q;b.onclick=()=>sendQ(b);qrow.appendChild(b);});
-  if(hist[convoKey()]){hist[convoKey()].forEach(m=>{if(m.role==='user')addUserMsg(m.content,[]);else addAgentMsg(m.content);});}
+  if(hist[convoKey()]){hist[convoKey()].forEach(m=>{
+    if(m._brief) addBriefCard(m._briefFrom, m.content);
+    else if(m.role==='user') addUserMsg(m.content,[]);
+    else addAgentMsg(m.content);
+  });}
 }
 
 // ── API KEY ──
