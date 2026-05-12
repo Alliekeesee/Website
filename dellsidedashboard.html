@@ -224,6 +224,25 @@ textarea::placeholder{color:var(--muted);}
 #finput{display:none;}
 .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:sp 0.65s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
+
+/* HANDOFF CARD */
+.handoff-card{background:linear-gradient(135deg,rgba(0,102,255,0.06),rgba(0,196,122,0.04));border:1.5px solid rgba(0,102,255,0.25);border-radius:13px;padding:16px 18px;margin:4px 0;animation:up 0.3s ease;}
+.hc-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--blue);margin-bottom:4px;}
+.hc-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.hc-rows{display:flex;flex-direction:column;gap:8px;}
+.hc-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:opacity 0.2s;}
+.hc-agent{display:flex;align-items:center;gap:9px;}
+.hc-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:11px;color:white;flex-shrink:0;}
+.hc-name{font-weight:700;font-size:13px;color:var(--text);}
+.hc-role{font-size:11px;color:var(--muted);}
+.hc-btns{display:flex;gap:7px;flex-shrink:0;}
+.go-btn{background:var(--green);color:white;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.12s;white-space:nowrap;}
+.go-btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);}
+.go-btn:disabled{background:var(--border);color:var(--muted);transform:none;cursor:not-allowed;}
+.skip-btn{background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.12s;white-space:nowrap;}
+.skip-btn:hover:not(:disabled){background:var(--border);color:var(--text2);}
+.skip-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.hc-status{font-size:12.5px;font-weight:600;padding:2px 0;}
 </style>
 </head>
 <body>
@@ -1150,37 +1169,79 @@ async function autoPipelineAgent(targetId, sourceAgentId) {
   document.getElementById('crew-lbl').textContent = '12 Agents Ready';
 }
 
-function doHandoffs(sourceAgentId) {
+function showHandoffCard(sourceAgentId) {
   const targets = HANDOFF_MAP[sourceAgentId] || [];
-  if (!targets.length) return;
+  if (!targets.length) {
+    toast('🎉 Approved and finalized! Ready to use.');
+    return;
+  }
   const briefFn = HANDOFF_BRIEF[sourceAgentId];
-  if (!briefFn) return;
-  const content = getLastAgentOutput(sourceAgentId);
-  if (!content) return;
-  const briefText = briefFn(content, client);
+  if (!briefFn) { toast('🎉 Done!'); return; }
 
-  const newTargets = [];
-  targets.forEach(targetId => {
+  const msgs = document.getElementById('msgs');
+  const card = document.createElement('div');
+  card.className = 'handoff-card';
+  card.id = 'hc-' + sourceAgentId + '-' + Date.now();
+  const cardId = card.id;
+
+  const rows = targets.map(targetId => {
+    const ag = A[targetId];
+    return `<div class="hc-row" id="hcr-${cardId}-${targetId}">
+      <div class="hc-agent">
+        <div class="hc-av" style="background:${ag.c}">${ag.av}</div>
+        <div><div class="hc-name">${ag.n}</div><div class="hc-role">${ag.r}</div></div>
+      </div>
+      <div class="hc-btns">
+        <button class="go-btn" onclick="goAgent(this,'${sourceAgentId}','${targetId}','${cardId}')">Go →</button>
+        <button class="skip-btn" onclick="skipAgent(this,'${targetId}','${cardId}')">Skip</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  card.innerHTML = `<div class="hc-title">🚀 Pipeline Ready — Who's up next for ${client}?</div>
+    <div class="hc-sub">Click Go to run each agent, or Skip to bypass them. You only pay for what you run.</div>
+    <div class="hc-rows">${rows}</div>`;
+
+  msgs.appendChild(card);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function goAgent(btn, sourceAgentId, targetId, cardId) {
+  const row = document.getElementById('hcr-' + cardId + '-' + targetId);
+  if (!row) return;
+
+  // Disable all buttons in this row immediately
+  row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  btn.textContent = 'Running...';
+
+  // Inject the brief into target's history (if not already there)
+  const briefFn = HANDOFF_BRIEF[sourceAgentId];
+  const content = getLastAgentOutput(sourceAgentId);
+  if (briefFn && content) {
+    const briefText = briefFn(content, client);
     const key = `${targetId}::${client}`;
     if (!hist[key]) hist[key] = [];
     const alreadyBriefed = hist[key].some(m => m.role === 'user' && m._brief === sourceAgentId);
     if (!alreadyBriefed) {
       hist[key].push({role:'user', content:briefText, _brief:sourceAgentId, _briefFrom:A[sourceAgentId].n});
-      newTargets.push(targetId);
+      saveHist();
     }
-  });
-  saveHist();
+  }
 
-  if (!newTargets.length) return;
-  const names = newTargets.map(id => A[id].n).join(' and ');
-  toast(`🚀 Pipeline running — ${names} are now working on ${client}...`);
-  // Run sequentially to avoid rate limits
-  (async () => {
-    for (let i = 0; i < newTargets.length; i++) {
-      if (i > 0) await new Promise(r => setTimeout(r, 8000)); // 8s gap between agents
-      await autoPipelineAgent(newTargets[i], sourceAgentId);
-    }
-  })();
+  // Show running state in the row
+  const agName = A[targetId].n;
+  row.innerHTML = `<div class="hc-status" style="color:var(--orange)">⚡ ${agName} is working...</div>`;
+
+  await autoPipelineAgent(targetId, sourceAgentId);
+
+  if (row) row.innerHTML = `<div class="hc-status" style="color:var(--green)">✓ ${agName} done — click their name in the sidebar to review.</div>`;
+}
+
+function skipAgent(btn, targetId, cardId) {
+  const row = document.getElementById('hcr-' + cardId + '-' + targetId);
+  if (!row) return;
+  row.innerHTML = `<div class="hc-status" style="color:var(--muted);text-decoration:line-through">${A[targetId].n} — skipped</div>`;
+  toast(`Skipped ${A[targetId].n}.`);
 }
 
 function finalApprove(btn, agentId){
@@ -1203,8 +1264,7 @@ function finalApprove(btn, agentId){
   // Also clear the ⚡ badge on this agent
   const badge = document.getElementById('sb-'+agentId);
   if (badge) { badge.style.cssText=''; badge.className='sbadge idle'; badge.textContent='Ready'; }
-  doHandoffs(agentId);
-  if (!(HANDOFF_MAP[agentId]||[]).length) toast('🎉 Approved and finalized! Ready to use.');
+  showHandoffCard(agentId);
 }
 
 function requestTweak(btn, agentId, draftId){
