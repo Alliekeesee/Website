@@ -823,7 +823,7 @@ async function runCrewConsultations(originAgentId, originalRequest, consultReque
     const sys = `${ag.sys}\n\nActive client: ${client}. You are being consulted by ${A[originAgentId].n} as part of an internal team discussion. Give a focused, expert answer. This is internal working input, not final client-facing output. Never use em dashes.`;
     const msg = `${A[originAgentId].n} is working on a task for ${client} and needs your input.\n\nOriginal request: "${originalRequest}"\n\nQuestion for you: ${req.question}`;
     try {
-      const reply = await callAPI(sys, [{role:'user', content:msg}], WEB_SEARCH_AGENTS.has(req.agentId));
+      const reply = await callAPI(sys, [{role:'user', content:msg}], WEB_SEARCH_AGENTS.has(req.agentId), 600);
       typing.remove();
       setDone(req.agentId);
       addConsultEntry(discContainer, req.agentId, req.question, reply);
@@ -842,7 +842,8 @@ async function runCrewConsultations(originAgentId, originalRequest, consultReque
 const WEB_SEARCH_AGENTS = new Set(['mandy','fiona','frank','ian']);
 
 // ── API CALL ──
-async function callAPI(systemPrompt, messages, useWebSearch = false) {
+// maxTokens: 1500 normal, 800 for QA/consult calls to stay under rate limits
+async function callAPI(systemPrompt, messages, useWebSearch = false, maxTokens = 1500) {
   if (!apiKey) {
     await new Promise(r=>setTimeout(r,1200));
     return `[Demo mode — paste your API key to activate real responses]`;
@@ -853,21 +854,23 @@ async function callAPI(systemPrompt, messages, useWebSearch = false) {
     'anthropic-version': '2023-06-01',
     'anthropic-dangerous-direct-browser-access': 'true'
   };
-  const bodyBase = {
-    model:'claude-sonnet-4-6',
-    max_tokens:2000,
-    system:systemPrompt
-  };
+  const bodyBase = { model:'claude-sonnet-4-6', max_tokens:maxTokens, system:systemPrompt };
   if (useWebSearch) {
-    bodyBase.tools = [{type:'web_search_20250305', name:'web_search', max_uses:5}];
+    bodyBase.tools = [{type:'web_search_20250305', name:'web_search', max_uses:3}];
   }
   let msgs = [...messages];
   for (let turn = 0; turn < 8; turn++) {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST', headers,
-      body:JSON.stringify({...bodyBase, messages:msgs})
-    });
-    const data = await res.json();
+    // Retry up to 3 times on rate limit (429)
+    let res, data;
+    for (let attempt = 0, delay = 15000; attempt < 3; attempt++, delay *= 2) {
+      res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers,
+        body:JSON.stringify({...bodyBase, messages:msgs})
+      });
+      data = await res.json();
+      if (res.status !== 429) break;
+      await new Promise(r => setTimeout(r, delay));
+    }
     if (data.error) throw new Error(data.error.message);
     const toolUses = data.content?.filter(b=>b.type==='tool_use') || [];
     if (!toolUses.length || data.stop_reason==='end_turn') {
@@ -951,7 +954,7 @@ async function runQA(draft, originAgentId, round) {
   const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round ${round} of 2.`;
   const reviewMsg = `Please review this content produced by ${A[originAgentId].n} for client ${client}:\n\n---\n${draft}\n---\n\nProvide your verdict following your exact response format.`;
   try {
-    const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}]);
+    const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}], false, 800);
     monicaTyping.remove();
     setDone('monica');
     const approved = verdict.includes('VERDICT: APPROVED');
@@ -1087,7 +1090,7 @@ async function runAgentSilent(targetId, messages, proceedMsg) {
       if (!cag) continue;
       const cSys = `${cag.sys}\n\nActive client: ${client}. You are being consulted internally. Give focused expert input. Never use em dashes.`;
       try {
-        const r = await callAPI(cSys, [{role:'user', content:`${ag.n} needs your input on: ${req.question}`}], WEB_SEARCH_AGENTS.has(req.agentId));
+        const r = await callAPI(cSys, [{role:'user', content:`${ag.n} needs your input on: ${req.question}`}], WEB_SEARCH_AGENTS.has(req.agentId), 600);
         results.push(`${cag.n}:\n${r}`);
       } catch(e) {}
     }
@@ -1121,7 +1124,7 @@ async function autoPipelineAgent(targetId, sourceAgentId) {
       if (badge) { badge.className = 'sbadge reviewing'; badge.textContent = 'QA Review...'; }
       const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round 1 of 2.`;
       const reviewMsg = `Please review this content produced by ${ag.n} for client ${client}:\n\n---\n${reply}\n---\n\nProvide your verdict.`;
-      const verdict = await callAPI(reviewPrompt, [{role:'user', content:reviewMsg}]);
+      const verdict = await callAPI(reviewPrompt, [{role:'user', content:reviewMsg}], false, 800);
       const approved = verdict.includes('VERDICT: APPROVED');
       const draftId = storeDraft(reply);
       hist[key].push({role:'qa', verdict, approved, originAgentId:targetId, round:1, draftId});
@@ -1171,8 +1174,13 @@ function doHandoffs(sourceAgentId) {
   if (!newTargets.length) return;
   const names = newTargets.map(id => A[id].n).join(' and ');
   toast(`🚀 Pipeline running — ${names} are now working on ${client}...`);
-  // Run all target agents in parallel
-  newTargets.forEach(targetId => autoPipelineAgent(targetId, sourceAgentId));
+  // Run sequentially to avoid rate limits
+  (async () => {
+    for (let i = 0; i < newTargets.length; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 8000)); // 8s gap between agents
+      await autoPipelineAgent(newTargets[i], sourceAgentId);
+    }
+  })();
 }
 
 function finalApprove(btn, agentId){
