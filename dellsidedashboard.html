@@ -653,6 +653,22 @@ function clearAllHist() {
 
 if (apiKey) document.getElementById('apibanner').style.display='none';
 
+// Strip metadata fields before sending to API; filter out non-message entries
+function apiMsgs(msgs) {
+  return msgs
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({role: m.role, content: m.content}));
+}
+
+// Draft store — avoids encoding huge strings in onclick attributes
+const draftStore = {};
+function storeDraft(content) {
+  const id = 'd' + Date.now();
+  draftStore[id] = content;
+  return id;
+}
+function getDraft(id) { return draftStore[id] || ''; }
+
 // ── AGENT SELECT ──
 function selAgent(id) {
   document.querySelectorAll('.arow').forEach(r=>r.classList.remove('active'));
@@ -894,15 +910,13 @@ async function send(){
     const sys=`${ag.sys}\n\nActive client: ${client}. Occasionally address Allie by name. Be specific and actionable. Never use em dashes.`;
 
     // First pass — check if agent wants to consult teammates
-    const initialReply = await callAPI(sys, h, WEB_SEARCH_AGENTS.has(cur));
+    const initialReply = await callAPI(sys, apiMsgs(h), WEB_SEARCH_AGENTS.has(cur));
     const consultRequests = parseConsult(initialReply);
 
     let finalReply;
     if (consultRequests && consultRequests.length) {
       typing.remove();
-      // Run team consultations
       const teamInputs = await runCrewConsultations(cur, full, consultRequests);
-      // Re-call the original agent with all team input included
       const enrichedTyping = showTyping();
       setWorking(cur);
       const teamContext = teamInputs.join('\n\n---\n\n');
@@ -932,41 +946,37 @@ async function send(){
 
 // ── QA PIPELINE ──
 async function runQA(draft, originAgentId, round) {
-  const msgs=document.getElementById('msgs');
-
-  // Show Monica reviewing
   setWorking('monica');
-  const monicaTyping=showTypingFor('monica');
-
+  const monicaTyping = showTypingFor('monica');
   const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round ${round} of 2.`;
   const reviewMsg = `Please review this content produced by ${A[originAgentId].n} for client ${client}:\n\n---\n${draft}\n---\n\nProvide your verdict following your exact response format.`;
-
   try {
     const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}]);
     monicaTyping.remove();
     setDone('monica');
-
     const approved = verdict.includes('VERDICT: APPROVED');
-    showQACard(verdict, approved, draft, originAgentId, round);
-
+    const draftId = storeDraft(draft);
+    // Store in history so card survives navigation
+    const key = `${originAgentId}::${client}`;
+    if (hist[key]) { hist[key].push({role:'qa', verdict, approved, originAgentId, round, draftId}); saveHist(); }
+    showQACard(verdict, approved, draftId, originAgentId, round);
   } catch(err){
-    monicaTyping.remove();resetSt('monica');
+    monicaTyping.remove(); resetSt('monica');
     addAgentMsg(`Monica ran into an issue: ${err.message}`);
   }
 }
 
-function showQACard(verdict, approved, draft, originAgentId, round){
-  const msgs=document.getElementById('msgs');
-  const card=document.createElement('div');
-  card.className=`qa-card ${approved?'approved':'flagged'}`;
-
-  if(approved){
+function buildQACard(verdict, approved, draftId, originAgentId, round) {
+  const card = document.createElement('div');
+  card.className = `qa-card ${approved?'approved':'flagged'}`;
+  const encodedVerdict = encodeURIComponent(verdict);
+  if (approved) {
     card.innerHTML=`
       <div class="qa-header"><div class="qa-icon">✅</div><div class="qa-title">Monica's QA: APPROVED — Round ${round}</div></div>
       <div class="qa-body">${md(verdict.replace('VERDICT: APPROVED',''))}</div>
       <div class="qa-actions">
         <button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve & Mark Final</button>
-        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${encodeURIComponent(draft)}')">✏️ Request a Tweak</button>
+        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${draftId}')">✏️ Request a Tweak</button>
       </div>
       <div class="qa-round">Monica approved · Round ${round}/2 · Awaiting your final approval, Allie</div>`;
   } else {
@@ -975,15 +985,20 @@ function showQACard(verdict, approved, draft, originAgentId, round){
       <div class="qa-body">${md(verdict.replace('VERDICT: NEEDS REVISION',''))}</div>
       <div class="qa-actions">
         ${round < 2
-          ? `<button class="qa-btn send-revision" onclick="sendRevision(this,'${originAgentId}','${encodeURIComponent(verdict)}',${round})">🔁 Send Back to ${A[originAgentId].n}</button>`
-          : `<button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve Anyway (Override)</button>`
-        }
-        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${encodeURIComponent(draft)}')">✏️ I'll Give Specific Notes</button>
+          ? `<button class="qa-btn send-revision" onclick="sendRevision(this,'${originAgentId}','${encodedVerdict}',${round})">🔁 Send Back to ${A[originAgentId].n}</button>`
+          : `<button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve Anyway (Override)</button>`}
+        <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${draftId}')">✏️ I'll Give Specific Notes</button>
       </div>
       <div class="qa-round">${round < 2 ? `Round ${round}/2 · One revision round remaining` : `Round 2/2 · Max revisions reached — your call, Allie`}</div>`;
   }
+  return card;
+}
+
+function showQACard(verdict, approved, draftId, originAgentId, round) {
+  const msgs = document.getElementById('msgs');
+  const card = buildQACard(verdict, approved, draftId, originAgentId, round);
   msgs.appendChild(card);
-  msgs.scrollTop=msgs.scrollHeight;
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 async function sendRevision(btn, originAgentId, encodedVerdict, round){
@@ -1045,6 +1060,93 @@ function getLastAgentOutput(agentId) {
   return '';
 }
 
+// Proceed message per agent — what auto-pipeline sends after injecting the brief
+const PIPELINE_PROCEED = {
+  fiona:    cl => `You have been briefed on ${cl}. Produce your complete strategy brief now. Full deliverable.`,
+  mandy:    cl => `You have been briefed on ${cl}. Run your full research and social audit now. Produce the complete Research Brief and Social Audit Report.`,
+  frank:    cl => `You have been briefed on ${cl}. Produce the complete content strategy now — content pillars, campaign concepts, and creative direction memo.`,
+  ian:      cl => `You have been briefed on ${cl}. Build the first month content calendar with captions for every post.`,
+  carl:     cl => `You have been briefed on ${cl}. Produce the full copy suite now — hooks, headlines, and CTAs aligned with the content strategy.`,
+  lip:      cl => `You have been briefed on ${cl}. Produce the Meta ad campaign structure — 3+ copy variations, audience targeting, and budget pacing.`,
+  debbie:   cl => `You have been briefed on ${cl}. Write the full email sequence now.`,
+  liam:     cl => `You have been briefed on ${cl}. Run the full local SEO audit and produce recommendations now.`,
+  kev:      cl => `You have been briefed on ${cl}. Build the performance report now.`,
+  vee:      cl => `You have been briefed on ${cl}. Write the complete creative direction brief now.`,
+};
+
+async function runAgentSilent(targetId, messages, proceedMsg) {
+  const ag = A[targetId];
+  const sys = `${ag.sys}\n\nActive client: ${client}. Be specific and actionable. Never use em dashes.`;
+  const msgs = [...apiMsgs(messages), {role:'user', content:proceedMsg}];
+  const initial = await callAPI(sys, msgs, WEB_SEARCH_AGENTS.has(targetId));
+  const consultRequests = parseConsult(initial);
+  if (consultRequests && consultRequests.length) {
+    const results = [];
+    for (const req of consultRequests) {
+      const cag = A[req.agentId];
+      if (!cag) continue;
+      const cSys = `${cag.sys}\n\nActive client: ${client}. You are being consulted internally. Give focused expert input. Never use em dashes.`;
+      try {
+        const r = await callAPI(cSys, [{role:'user', content:`${ag.n} needs your input on: ${req.question}`}], WEB_SEARCH_AGENTS.has(req.agentId));
+        results.push(`${cag.n}:\n${r}`);
+      } catch(e) {}
+    }
+    if (results.length) {
+      const enriched = `${proceedMsg}\n\n=== TEAM INPUT ===\n${results.join('\n\n---\n\n')}\n=== END TEAM INPUT ===\n\nNow produce your complete deliverable.`;
+      return await callAPI(sys, [{role:'user', content:enriched}], WEB_SEARCH_AGENTS.has(targetId));
+    }
+  }
+  return initial;
+}
+
+async function autoPipelineAgent(targetId, sourceAgentId) {
+  const ag = A[targetId];
+  const key = `${targetId}::${client}`;
+  if (!hist[key]) hist[key] = [];
+  const badge = document.getElementById('sb-' + targetId);
+
+  // Set working badge
+  if (badge) { badge.className = 'sbadge working'; badge.textContent = 'Working...'; badge.style.cssText = ''; }
+  document.getElementById('crew-lbl').textContent = 'Crew Working...';
+
+  const proceedMsg = (PIPELINE_PROCEED[targetId] || (cl => `You have been briefed on ${cl}. Produce your full deliverable now.`))(client);
+
+  try {
+    const reply = await runAgentSilent(targetId, hist[key], proceedMsg);
+    hist[key].push({role:'assistant', content:reply});
+    saveHist();
+
+    // Run Monica QA silently
+    if (ag.qa) {
+      if (badge) { badge.className = 'sbadge reviewing'; badge.textContent = 'QA Review...'; }
+      const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round 1 of 2.`;
+      const reviewMsg = `Please review this content produced by ${ag.n} for client ${client}:\n\n---\n${reply}\n---\n\nProvide your verdict.`;
+      const verdict = await callAPI(reviewPrompt, [{role:'user', content:reviewMsg}]);
+      const approved = verdict.includes('VERDICT: APPROVED');
+      const draftId = storeDraft(reply);
+      hist[key].push({role:'qa', verdict, approved, originAgentId:targetId, round:1, draftId});
+      saveHist();
+
+      // Badge: needs approval
+      if (badge) {
+        badge.className = 'sbadge';
+        badge.style.cssText = 'color:#FF8C00;background:rgba(255,140,0,0.1);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;white-space:nowrap;';
+        badge.textContent = approved ? '⚡ Approve' : '⚡ Review';
+      }
+      toast(`${ag.n} finished for ${client}${approved ? ' — ready for your approval' : ' — Monica flagged issues'}. Click to review.`);
+    } else {
+      if (badge) { badge.className = 'sbadge done'; badge.textContent = 'Done ✓'; badge.style.cssText = ''; }
+      setTimeout(() => resetSt(targetId), 4000);
+      toast(`${ag.n} finished for ${client}. Click to view.`);
+    }
+  } catch(err) {
+    if (badge) { badge.className = 'sbadge idle'; badge.textContent = 'Ready'; badge.style.cssText = ''; }
+    console.error(`Pipeline failed for ${targetId}:`, err);
+    toast(`${ag.n} hit an error: ${err.message}`);
+  }
+  document.getElementById('crew-lbl').textContent = '12 Agents Ready';
+}
+
 function doHandoffs(sourceAgentId) {
   const targets = HANDOFF_MAP[sourceAgentId] || [];
   if (!targets.length) return;
@@ -1053,27 +1155,24 @@ function doHandoffs(sourceAgentId) {
   const content = getLastAgentOutput(sourceAgentId);
   if (!content) return;
   const briefText = briefFn(content, client);
+
+  const newTargets = [];
   targets.forEach(targetId => {
     const key = `${targetId}::${client}`;
     if (!hist[key]) hist[key] = [];
-    // Avoid duplicate briefs
     const alreadyBriefed = hist[key].some(m => m.role === 'user' && m._brief === sourceAgentId);
     if (!alreadyBriefed) {
       hist[key].push({role:'user', content:briefText, _brief:sourceAgentId, _briefFrom:A[sourceAgentId].n});
+      newTargets.push(targetId);
     }
   });
   saveHist();
-  // Badge briefed agents
-  targets.forEach(targetId => {
-    const badge = document.getElementById('sb-'+targetId);
-    if (badge && badge.textContent !== 'Working...' && badge.textContent !== 'Reviewing...') {
-      badge.className = 'sbadge';
-      badge.style.cssText = 'color:#0066FF;background:var(--blue-bg);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;';
-      badge.textContent = '📬 Briefed';
-    }
-  });
-  const names = targets.map(id => A[id].n).join(' and ');
-  toast(`📬 Brief sent to ${names}. Click them when ready — context is already loaded.`);
+
+  if (!newTargets.length) return;
+  const names = newTargets.map(id => A[id].n).join(' and ');
+  toast(`🚀 Pipeline running — ${names} are now working on ${client}...`);
+  // Run all target agents in parallel
+  newTargets.forEach(targetId => autoPipelineAgent(targetId, sourceAgentId));
 }
 
 function finalApprove(btn, agentId){
@@ -1083,14 +1182,24 @@ function finalApprove(btn, agentId){
     <div class="qa-header"><div class="qa-icon">🎉</div><div class="qa-title">FINAL APPROVED — Ready to Use</div></div>
     <div class="qa-body">You approved this output, Allie. It's ready to copy, schedule, or send to the client. Monica's standards met. Job done.</div>
     <div class="qa-round">Approved by Allie · ${A[agentId].n} · ${client} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`;
+  // Mark in history as final approved
+  const key = `${agentId}::${client}`;
+  if (hist[key]) {
+    for (let i = hist[key].length-1; i >= 0; i--) {
+      if (hist[key][i].role === 'qa' && !hist[key][i].finalApproved) {
+        hist[key][i].finalApproved = true; break;
+      }
+    }
+    saveHist();
+  }
+  // Also clear the ⚡ badge on this agent
+  const badge = document.getElementById('sb-'+agentId);
+  if (badge) { badge.style.cssText=''; badge.className='sbadge idle'; badge.textContent='Ready'; }
   doHandoffs(agentId);
   if (!(HANDOFF_MAP[agentId]||[]).length) toast('🎉 Approved and finalized! Ready to use.');
 }
 
-function requestTweak(btn, agentId, encodedDraft){
-  const card=btn.closest('.qa-card');
-  const draft=decodeURIComponent(encodedDraft);
-  // Switch chat to original agent
+function requestTweak(btn, agentId, draftId){
   selAgent(agentId);
   document.getElementById('tinput').value=`Please make this tweak to the output you produced:\n\n`;
   document.getElementById('tinput').focus();
@@ -1145,8 +1254,20 @@ function renderMsgs(){
   (QP[cur]||[]).forEach(q=>{const b=document.createElement('button');b.className='qbtn';b.textContent=q;b.onclick=()=>sendQ(b);qrow.appendChild(b);});
   if(hist[convoKey()]){hist[convoKey()].forEach(m=>{
     if(m._brief) addBriefCard(m._briefFrom, m.content);
-    else if(m.role==='user') addUserMsg(m.content,[]);
-    else addAgentMsg(m.content);
+    else if(m.role==='qa'){
+      // Re-render stored QA card; restore draft into draftStore if needed
+      if(m.draftId && !draftStore[m.draftId] && m.draft) draftStore[m.draftId]=m.draft;
+      if(m.finalApproved){
+        const fc=document.createElement('div');fc.className='qa-card final';
+        fc.innerHTML=`<div class="qa-header"><div class="qa-icon">🎉</div><div class="qa-title">FINAL APPROVED — Ready to Use</div></div><div class="qa-body">Approved by Allie. Ready to copy, schedule, or send to the client.</div><div class="qa-round">Approved by Allie · ${A[m.originAgentId]?.n||''} · ${client}</div>`;
+        document.getElementById('msgs').appendChild(fc);
+      } else {
+        const card=buildQACard(m.verdict,m.approved,m.draftId||'',m.originAgentId,m.round);
+        document.getElementById('msgs').appendChild(card);
+      }
+    }
+    else if(m.role==='user'&&!m._auto) addUserMsg(m.content,[]);
+    else if(m.role==='assistant') addAgentMsg(m.content);
   });}
 }
 
