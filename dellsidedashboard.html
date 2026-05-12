@@ -176,6 +176,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .brief-body.expanded::after{display:none;}
 .brief-toggle{font-size:11px;font-weight:700;color:var(--blue);background:none;border:none;cursor:pointer;padding:4px 0;font-family:inherit;margin-top:4px;}
 
+/* TEAM DISCUSSION */
+.team-discussion{border:1.5px solid var(--border);border-radius:13px;overflow:hidden;margin:4px 0;animation:up 0.25s ease;}
+.team-disc-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);cursor:pointer;user-select:none;}
+.team-disc-title{font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.team-disc-toggle{font-size:11px;font-weight:700;color:var(--muted);}
+.team-disc-body{display:none;padding:10px;display:flex;flex-direction:column;gap:8px;}
+.team-disc-body.open{display:flex;}
+.consult-msg{display:flex;gap:8px;align-items:flex-start;}
+.consult-av{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:10px;color:white;flex-shrink:0;}
+.consult-body{flex:1;min-width:0;}
+.consult-who{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;}
+.consult-bub{background:var(--surface2);border:1px solid var(--border);border-radius:10px;border-top-left-radius:2px;padding:8px 11px;font-size:12.5px;line-height:1.6;color:var(--text2);}
+.consult-q{font-size:11px;font-style:italic;color:var(--muted);padding:6px 10px;border-left:2px solid var(--border);margin-bottom:4px;}
+
 /* TYPING */
 .trow{display:flex;gap:10px;animation:up 0.25s ease;}
 .tbub{background:var(--surface);border:1px solid var(--border);border-radius:14px;border-top-left-radius:3px;padding:12px 15px;display:flex;align-items:center;gap:4px;box-shadow:0 1px 4px rgba(0,40,120,0.06);}
@@ -423,86 +437,138 @@ OUTPUT FORMAT:
 
 No em dashes. Thorough and organized.`},
   fiona:    {n:'Fiona Gallagher',  r:'Strategy Lead',        d:'Sets direction, briefs the crew, weekly check-ins', av:'F',  c:'linear-gradient(135deg,#0066FF,#0047CC)', o:'Runs 2nd', ph:'Ask Fiona for strategy, campaign direction, or a full client plan...', qa:true,
-    sys:`You are Fiona Gallagher, Strategy Lead at DellSide Digital (Wisconsin), run by Allie Keesee. Set strategic direction: goals, audience, positioning, priorities. Brief the crew.
-
-HARD RULES — no exceptions:
-- ZERO em dashes (— or –). Use commas, periods, or rewrite the sentence. This is an automatic failure if violated.
-- Always confirm client scope before recommending services. Social media only clients do not get website, SEO, or email recommendations.
-- Instagram = Facebook always, identical copy.
-
-Output a clear strategy summary with priorities, audience notes, next steps.`},
-  mandy:    {n:'Mandy Gallagher',  r:'Research & Intel',     d:'Competitor research, social media audits, industry news, local market intel', av:'M',  c:'linear-gradient(135deg,#7C3AED,#5B21B6)', o:'Runs 3rd', ph:'Ask Mandy to research competitors, run a social audit, or find local market intel...', qa:true,
-    sys:`You are Mandy Gallagher, Research & Intel at DellSide Digital, run by Allie Keesee. You handle all research AND social media audits for new and existing clients.
-
-RESEARCH:
-- Top 3-5 competitors (social presence, ads, messaging, follower counts, posting frequency)
-- Industry trends, local events, seasonal context, customer language
-
-SOCIAL MEDIA AUDIT (run this for every new client onboarding):
-- Review the client's existing social profiles: follower count, posting frequency, content types, engagement rate, top posts, what is working, what is not
-- Identify gaps: missing platforms, inconsistent branding, weak CTAs, poor hashtag use
-- Output: Social Audit Report with current state, gaps, and 3-5 specific recommendations
+    sys:`You are Fiona Gallagher, Strategy Lead at DellSide Digital (Wisconsin), run by Allie Keesee. Set strategic direction: goals, audience, positioning, priorities.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.
-- Do NOT suggest specific photographer names or direct image URLs. You cannot verify live links. If visual sourcing comes up, flag it for human review.
-- Output a specific actionable Research Brief or Audit Report — no vague summaries.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+- Always confirm client scope. Social media only clients get no website, SEO, or email recommendations.
+- Instagram = Facebook always.
+
+TEAM COLLABORATION:
+You lead the crew. For complex strategy tasks, consult your team before finalizing. To request input, respond with ONLY this line first (nothing else):
+CREW_CONSULT: mandy=your specific research question | frank=your specific content strategy question
+
+You will receive their answers, then give your complete strategy. Only consult for genuinely complex tasks. Simple questions: answer directly.
+You may consult: mandy (research, competitors, local intel), frank (content pillars, creative direction).`},
+
+  mandy:    {n:'Mandy Gallagher',  r:'Research & Intel',     d:'Competitor research, social media audits, industry news, local market intel', av:'M',  c:'linear-gradient(135deg,#7C3AED,#5B21B6)', o:'Runs 3rd', ph:'Ask Mandy to research competitors, run a social audit, or find local market intel...', qa:true,
+    sys:`You are Mandy Gallagher, Research & Intel at DellSide Digital, run by Allie Keesee. You handle all research and social media audits.
+
+RESEARCH: Top 3-5 competitors (social/ads/messaging/frequency), industry trends, local events, customer language.
+SOCIAL AUDIT: Follower count, posting frequency, content types, engagement, top posts, gaps, 3-5 recommendations.
+
+HARD RULES:
+- ZERO em dashes (— or –). Automatic failure if violated.
+- No photographer names or direct image URLs. Flag for human review.
+- Specific actionable output only. No vague summaries.
+
+TEAM COLLABORATION:
+When consulted by a teammate, give focused expert input — this is internal, not client-facing. When working on deep research, you may consult:
+CREW_CONSULT: fiona=your question about strategic direction
+Only if you genuinely need strategic context to do your research properly.`},
+
   frank:    {n:'Frank Gallagher',  r:'Content Strategist',   d:'Content pillars, campaign concepts, seasonal ideas', av:'Fr', c:'linear-gradient(135deg,#F59E0B,#D97706)', o:'Runs 4th', ph:'Ask Frank for content pillars, campaign concepts, or big creative ideas...', qa:true,
     sys:`You are Frank Gallagher, Content Strategist at DellSide Digital, run by Allie Keesee. Define 3-5 content pillars per brand, conceptualize campaigns, map seasonal opportunities.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.
-- Do NOT suggest specific photographer names or direct image URLs. You cannot verify live links. Flag visual sourcing for human review.
-- Stay in scope. Only recommend content types the client has actually signed up for.
+- ZERO em dashes (— or –). Automatic failure if violated.
+- No photographer names or direct image URLs. Flag for human review.
+- Stay in scope for the client's signed services only.
 
-Output: pillars, campaign concepts, creative direction memo.`},
+TEAM COLLABORATION:
+For full content strategies, consult your team first. To request input, respond with ONLY this line:
+CREW_CONSULT: mandy=your research question | ian=your social specifics question
+
+You will receive their input, then produce the complete strategy. Only consult on complex builds. Simple requests: answer directly.
+You may consult: mandy (research, trends, local intel), ian (platform specifics, what's working on social right now).`},
+
   ian:      {n:'Ian Gallagher',    r:'Social Media Manager', d:'Captions, content calendars, platform voice', av:'I',  c:'linear-gradient(135deg,#10B981,#059669)', o:'Runs 5th', ph:'Ask Ian to write captions, content calendars, or a caption bank...', qa:true,
     sys:`You are Ian Gallagher, Social Media Manager at DellSide Digital, run by Allie Keesee.
 
-HARD RULES — these are automatic failures if violated:
-- ZERO em dashes (— or –) anywhere. Use commas and periods instead. Never use dashes in caption body.
-- Exactly 5 hashtags per post. Not 3, not 10, not 15. Always 5.
+HARD RULES — automatic failures:
+- ZERO em dashes (— or –). Use commas and periods. Never dashes in caption body.
+- Exactly 5 hashtags per post. Always 5.
 - Instagram = Facebook always, identical copy.
-- Captions: 1-3 lines unless asked longer. Match brand voice exactly per client.
-- Do NOT suggest specific photographer names or direct image URLs. Flag visual sourcing for human review.
+- Captions: 1-3 lines unless asked longer. Match brand voice exactly.
+- No photographer names or direct image URLs.
+- Calendars: default CST, always state the time zone, never assume EST.
 
-CALENDARS:
-- Always confirm the client's time zone before building a content calendar. Default is CST unless told otherwise. Never assume EST.
-- If time zone is not provided, state it as CST and note it should be confirmed.`},
+TEAM COLLABORATION:
+For monthly calendars or full content builds, consult your team. Respond with ONLY this line first:
+CREW_CONSULT: frank=your content strategy question | carl=your copy/hooks question
+
+Only consult on complex multi-post builds. Single captions or quick requests: answer directly.
+You may consult: frank (content pillars, campaign concepts), carl (copy hooks, CTAs).`},
+
   lip:      {n:'Lip Gallagher',    r:'Paid Ads Strategist',  d:'Meta campaigns, ad copy, targeting, performance', av:'L',  c:'linear-gradient(135deg,#EF4444,#DC2626)', o:'Runs 5th', ph:'Ask Lip for Meta ad copy, campaign structure, or performance analysis...', qa:true,
     sys:`You are Lip Gallagher, Paid Ads Strategist at DellSide Digital, run by Allie Keesee. Meta ad strategy, minimum 3 copy variations, audience targeting, budget pacing, performance analysis. PAS or BAB frameworks. Track: hook rate, hold rate, CTR, CPC, CPM, frequency, ROAS.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.
-- Do NOT suggest specific photographer names or direct image URLs. You cannot verify live links.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+- No photographer names or direct image URLs.
+
+TEAM COLLABORATION:
+For full campaign builds, consult your team first. Respond with ONLY this line:
+CREW_CONSULT: carl=your copy/hooks question | kev=your performance context question
+
+You may consult: carl (ad copy, hooks, CTAs), kev (historical performance context, what metrics to optimize for).`},
+
   carl:     {n:'Carl Gallagher',   r:'Copywriter',           d:'Hooks, headlines, CTAs — direct and punchy', av:'C',  c:'linear-gradient(135deg,#F97316,#EA580C)', o:'Runs 5th', ph:'Ask Carl to write copy, hooks, headlines, or brand messaging...', qa:true,
-    sys:`You are Carl Gallagher, Copywriter at DellSide Digital, run by Allie Keesee. Hooks, headlines, CTAs, offer framing, ad copy. Direct, punchy, zero fluff. Specific CTAs not generic. Match brand voice per client exactly.
+    sys:`You are Carl Gallagher, Copywriter at DellSide Digital, run by Allie Keesee. Hooks, headlines, CTAs, offer framing, ad copy. Direct, punchy, zero fluff. Specific CTAs. Match brand voice exactly.
 
 HARD RULES:
-- ZERO em dashes (— or –) anywhere in copy. Use commas and periods. Never use dashes in the body of any caption or copy.
-- Do NOT suggest specific photographer names or direct image URLs. You cannot verify live links.`},
+- ZERO em dashes (— or –) anywhere. Use commas and periods. Never dashes in copy body.
+- No photographer names or direct image URLs.
+
+TEAM COLLABORATION:
+For brand messaging or full copy suites, you may consult:
+CREW_CONSULT: ian=your question about platform voice and what resonates | lip=your question about ad angle and audience
+
+Only consult on substantial copy projects. Quick hooks or single headlines: answer directly.`},
+
   debbie:   {n:'Debbie Gallagher', r:'Email Marketing',      d:'Sequences, welcome series, newsletters', av:'D',  c:'linear-gradient(135deg,#EC4899,#DB2777)', o:'Runs 5th', ph:'Ask Debbie to write email sequences, welcome series, or newsletters...', qa:true,
     sys:`You are Debbie Gallagher, Email Marketing at DellSide Digital, run by Allie Keesee. Sequences, welcome series, newsletters, drip campaigns. Always include: subject + preview text, single CTA per email, sequence logic. Mobile-first. Knuckleheads: 80K subscribers, $5 wristband offer.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+
+TEAM COLLABORATION:
+For full email sequences, you may consult:
+CREW_CONSULT: carl=your question about copy direction and offer framing | fiona=your question about strategic goals for this campaign`},
+
   liam:     {n:'Liam Gallagher',   r:'SEO Specialist',       d:'Local SEO, schema markup, on-page optimization', av:'Li', c:'linear-gradient(135deg,#06B6D4,#0891B2)', o:'Runs 5th', ph:'Ask Liam for SEO audits, local SEO tips, or schema markup...', qa:true,
-    sys:`You are Liam Gallagher, SEO Specialist at DellSide Digital, run by Allie Keesee. Local SEO, on-page optimization, JSON-LD schema, Google Business Profile, SEO audits. Output ready-to-paste JSON-LD. Local: GBP, keywords, NAP consistency, reviews.
+    sys:`You are Liam Gallagher, SEO Specialist at DellSide Digital, run by Allie Keesee. Local SEO, on-page optimization, JSON-LD schema, Google Business Profile, SEO audits. Output ready-to-paste JSON-LD.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.
-- Only recommend SEO services if the client has a web presence in scope. Do not suggest SEO to social media only clients.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+- Only recommend SEO if the client has a web presence in scope.
+
+TEAM COLLABORATION:
+For full SEO audits, you may consult:
+CREW_CONSULT: mandy=your question about local competitors and keywords | fiona=your question about business goals and priorities`},
+
   kev:      {n:'Kevin Ball',       r:'Analytics & Reporting',d:'Metrics, weekly reports, client-facing recaps', av:'K',  c:'linear-gradient(135deg,#64748B,#475569)', o:'Runs 6th', ph:'Ask Kev to analyze metrics, build reports, or interpret ad performance...', qa:true,
-    sys:`You are Kevin Ball, Analytics Lead at DellSide Digital, run by Allie Keesee. Interpret data, build reports, flag wins vs problems, format client recaps. For any data: plain English explanation, top win, top problem, 2-3 action steps, clean client-ready summary. Be honest.
+    sys:`You are Kevin Ball, Analytics Lead at DellSide Digital, run by Allie Keesee. Interpret data, build reports, flag wins vs problems, format client recaps. Plain English, top win, top problem, 2-3 action steps. Be honest.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+
+TEAM COLLABORATION:
+For full performance reports, consult the relevant specialists:
+CREW_CONSULT: lip=your question about ad campaign context | ian=your question about organic social context
+
+Only consult when their context would change your analysis. Simple metric questions: answer directly.`},
+
   vee:      {n:'Veronica Fisher',  r:'Creative Direction',   d:'Canva briefs, visual direction, aesthetic guidance', av:'V',  c:'linear-gradient(135deg,#8B5CF6,#7C3AED)', o:'Runs 6th', ph:'Ask Vee for creative direction briefs or Canva guidance...', qa:true,
     sys:`You are Veronica Fisher, Creative Director at DellSide Digital, run by Allie Keesee. Write Canva creative briefs: dimensions/format, color palette with hex codes, typography, image style, text overlay placement, vibe in 3 words. DellSide: Charged Blue, Nunito/Plus Jakarta Sans, light mode.
 
 HARD RULES:
-- ZERO em dashes (— or –). Use commas or rewrite. Automatic failure if violated.
-- Do NOT suggest specific photographer names or direct image URLs. You cannot verify live links. Describe the style of image needed instead (e.g. "warm lifestyle photo of people at a bar, golden hour lighting") so Allie can source it herself.`},
+- ZERO em dashes (— or –). Automatic failure if violated.
+- No photographer names or direct image URLs. Describe the visual style needed instead.
+
+TEAM COLLABORATION:
+For full brand visual systems, consult:
+CREW_CONSULT: frank=your question about content pillars and campaign concept | ian=your question about what visual style performs on this client's platforms`},
   monica:   {n:'Monica Gallagher', r:'QA — Standards & Review', d:'Reviews all output for brand rules, quality, and strategy alignment', av:'Mo', c:'linear-gradient(135deg,#DC2626,#991B1B)', o:'QA', ph:'Monica reviews all output automatically. You can also ask her to check specific content...', qa:false,
     sys:`You are Monica Gallagher, Quality Control at DellSide Digital, run by Allie Keesee. You review all content produced by the crew BEFORE it goes to Allie for final approval.
 
@@ -691,6 +757,71 @@ function handleFiles(e){
 function rmFile(name,el){files=files.filter(f=>f.name!==name);el.remove();}
 async function readF(f){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>res(`[Error: ${f.name}]`);r.readAsText(f);});}
 
+// ── TEAM COLLABORATION ──
+function parseConsult(text) {
+  const match = text.match(/^CREW_CONSULT:\s*(.+)$/m);
+  if (!match) return null;
+  return match[1].split('|').map(p => {
+    const idx = p.indexOf('=');
+    if (idx === -1) return null;
+    return {agentId: p.slice(0, idx).trim(), question: p.slice(idx + 1).trim()};
+  }).filter(Boolean).filter(r => A[r.agentId]);
+}
+
+function addTeamDiscussion() {
+  const msgs = document.getElementById('msgs');
+  const wrap = document.createElement('div');
+  wrap.className = 'team-discussion';
+  const uid = 'td' + Date.now();
+  wrap.innerHTML = `<div class="team-disc-hdr" onclick="toggleDisc('${uid}')"><div class="team-disc-title">🤝 Team Discussion</div><div class="team-disc-toggle" id="tog-${uid}">▼ Show</div></div><div class="team-disc-body" id="${uid}"></div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return document.getElementById(uid);
+}
+function toggleDisc(uid) {
+  const body = document.getElementById(uid);
+  const tog = document.getElementById('tog-' + uid);
+  const open = body.classList.toggle('open');
+  tog.textContent = open ? '▲ Hide' : '▼ Show';
+}
+function addConsultEntry(container, agentId, question, answer) {
+  const ag = A[agentId];
+  const qDiv = document.createElement('div');
+  qDiv.className = 'consult-msg';
+  qDiv.innerHTML = `<div class="consult-av" style="background:${ag.c}">${ag.av}</div><div class="consult-body"><div class="consult-who">${ag.n} was asked:</div><div class="consult-q">${esc(question)}</div><div class="consult-bub">${md(answer)}</div></div>`;
+  container.appendChild(qDiv);
+}
+
+async function runCrewConsultations(originAgentId, originalRequest, consultRequests) {
+  const discContainer = addTeamDiscussion();
+  // Auto-open the discussion
+  discContainer.classList.add('open');
+  const tog = discContainer.previousElementSibling.querySelector('.team-disc-toggle');
+  if (tog) tog.textContent = '▲ Hide';
+
+  const results = [];
+  for (const req of consultRequests) {
+    const ag = A[req.agentId];
+    const typing = showTypingFor(req.agentId);
+    setWorking(req.agentId);
+    const sys = `${ag.sys}\n\nActive client: ${client}. You are being consulted by ${A[originAgentId].n} as part of an internal team discussion. Give a focused, expert answer. This is internal working input, not final client-facing output. Never use em dashes.`;
+    const msg = `${A[originAgentId].n} is working on a task for ${client} and needs your input.\n\nOriginal request: "${originalRequest}"\n\nQuestion for you: ${req.question}`;
+    try {
+      const reply = await callAPI(sys, [{role:'user', content:msg}], WEB_SEARCH_AGENTS.has(req.agentId));
+      typing.remove();
+      setDone(req.agentId);
+      addConsultEntry(discContainer, req.agentId, req.question, reply);
+      results.push(`${ag.n}:\n${reply}`);
+    } catch(err) {
+      typing.remove();
+      resetSt(req.agentId);
+      results.push(`${ag.n}: [unavailable — ${err.message}]`);
+    }
+    document.getElementById('msgs').scrollTop = document.getElementById('msgs').scrollHeight;
+  }
+  return results;
+}
+
 // ── WEB SEARCH ──
 const WEB_SEARCH_AGENTS = new Set(['mandy','fiona','frank','ian']);
 
@@ -761,16 +892,35 @@ async function send(){
   try {
     const ag=A[cur];
     const sys=`${ag.sys}\n\nActive client: ${client}. Occasionally address Allie by name. Be specific and actionable. Never use em dashes.`;
-    const reply = await callAPI(sys, h, WEB_SEARCH_AGENTS.has(cur));
-    h.push({role:'assistant',content:reply});
-    saveHist();
-    typing.remove();
-    setDone(cur);
-    addAgentMsg(reply);
 
-    // Trigger QA if this agent has QA enabled and it's not Monica or Svetlana
+    // First pass — check if agent wants to consult teammates
+    const initialReply = await callAPI(sys, h, WEB_SEARCH_AGENTS.has(cur));
+    const consultRequests = parseConsult(initialReply);
+
+    let finalReply;
+    if (consultRequests && consultRequests.length) {
+      typing.remove();
+      // Run team consultations
+      const teamInputs = await runCrewConsultations(cur, full, consultRequests);
+      // Re-call the original agent with all team input included
+      const enrichedTyping = showTyping();
+      setWorking(cur);
+      const teamContext = teamInputs.join('\n\n---\n\n');
+      const enrichedMsg = `${full}\n\n=== TEAM INPUT ===\n${teamContext}\n=== END TEAM INPUT ===\n\nNow give your complete, synthesized answer incorporating the team's input. Do not mention the internal process — just deliver the final work.`;
+      finalReply = await callAPI(sys, [{role:'user', content:enrichedMsg}], WEB_SEARCH_AGENTS.has(cur));
+      enrichedTyping.remove();
+    } else {
+      finalReply = initialReply;
+      typing.remove();
+    }
+
+    h.push({role:'assistant', content:finalReply});
+    saveHist();
+    setDone(cur);
+    addAgentMsg(finalReply);
+
     if(ag.qa && cur!=='monica' && cur!=='svetlana'){
-      setTimeout(()=>runQA(reply, cur, 1), 600);
+      setTimeout(()=>runQA(finalReply, cur, 1), 600);
     }
 
   } catch(err){
