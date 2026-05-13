@@ -1008,10 +1008,10 @@ async function runCrewConsultations(originAgentId, originalRequest, consultReque
     const ag = A[req.agentId];
     const typing = showTypingFor(req.agentId);
     setWorking(req.agentId);
-    const sys = `${ag.sys}\n\nActive client: ${client}. You are being consulted by ${A[originAgentId].n} as part of an internal team discussion. Give a focused, expert answer. This is internal working input, not final client-facing output. Never use em dashes.`;
-    const msg = `${A[originAgentId].n} is working on a task for ${client} and needs your input.\n\nOriginal request: "${originalRequest}"\n\nQuestion for you: ${req.question}`;
+    const sys = `${ag.sys}\n\nActive client: ${client}. You are being consulted by ${A[originAgentId].n} as part of an internal team discussion. Answer directly from your own expertise right now. CRITICAL: Do NOT output a CREW_CONSULT line — you are the one being consulted, not the one consulting. Do not request further input from anyone. Just answer. This is internal working input, not final client-facing output. Never use em dashes.`;
+    const msg = `${A[originAgentId].n} is working on a task for ${client} and needs your input.\n\nOriginal request: "${originalRequest}"\n\nQuestion for you: ${req.question}\n\nAnswer directly. Do not send a CREW_CONSULT — this is your moment to deliver your expertise.`;
     try {
-      const reply = await callAPI(sys, [{role:'user', content:msg}], WEB_SEARCH_AGENTS.has(req.agentId), 600);
+      const reply = await callAPI(sys, [{role:'user', content:msg}], WEB_SEARCH_AGENTS.has(req.agentId), 1200);
       typing.remove();
       setDone(req.agentId);
       addConsultEntry(discContainer, req.agentId, req.question, reply);
@@ -1031,7 +1031,7 @@ const WEB_SEARCH_AGENTS = new Set(['mandy','fiona','frank','ian']);
 
 // ── API CALL ──
 // maxTokens: 1500 normal, 800 for QA/consult calls to stay under rate limits
-async function callAPI(systemPrompt, messages, useWebSearch = false, maxTokens = 1500) {
+async function callAPI(systemPrompt, messages, useWebSearch = false, maxTokens = 2500) {
   if (!apiKey) {
     await new Promise(r=>setTimeout(r,1200));
     return `[Demo mode — paste your API key to activate real responses]`;
@@ -1206,7 +1206,7 @@ async function runQA(draft, originAgentId, round) {
   const reviewPrompt = `${A.monica.sys}\n\nClient: ${client}. Reviewing round ${round} of 2.`;
   const reviewMsg = `Please review this content produced by ${A[originAgentId].n} for client ${client}:\n\n---\n${draft}\n---\n\nProvide your verdict following your exact response format.`;
   try {
-    const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}], false, 800);
+    const verdict = await callAPI(reviewPrompt, [{role:'user',content:reviewMsg}], false, 1200);
     monicaTyping.remove();
     setDone('monica');
     const approved = verdict.includes('VERDICT: APPROVED');
@@ -1224,7 +1224,7 @@ async function runQA(draft, originAgentId, round) {
 function buildQACard(verdict, approved, draftId, originAgentId, round) {
   const card = document.createElement('div');
   card.className = `qa-card ${approved?'approved':'flagged'}`;
-  const encodedVerdict = encodeURIComponent(verdict);
+  const verdictId = storeDraft(verdict);
   if (approved) {
     card.innerHTML=`
       <div class="qa-header"><div class="qa-icon">✅</div><div class="qa-title">Monica's QA: APPROVED — Round ${round}</div></div>
@@ -1240,7 +1240,7 @@ function buildQACard(verdict, approved, draftId, originAgentId, round) {
       <div class="qa-body">${md(verdict.replace('VERDICT: NEEDS REVISION',''))}</div>
       <div class="qa-actions">
         ${round < 2
-          ? `<button class="qa-btn send-revision" onclick="sendRevision(this,'${originAgentId}','${encodedVerdict}',${round})">🔁 Send Back to ${A[originAgentId].n}</button>`
+          ? `<button class="qa-btn send-revision" onclick="sendRevision(this,'${originAgentId}','${verdictId}',${round})">🔁 Send Back to ${A[originAgentId].n}</button>`
           : `<button class="qa-btn approve" onclick="finalApprove(this,'${originAgentId}')">✅ Approve Anyway (Override)</button>`}
         <button class="qa-btn tweak" onclick="requestTweak(this,'${originAgentId}','${draftId}')">✏️ I'll Give Specific Notes</button>
       </div>
@@ -1256,9 +1256,9 @@ function showQACard(verdict, approved, draftId, originAgentId, round) {
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-async function sendRevision(btn, originAgentId, encodedVerdict, round){
+async function sendRevision(btn, originAgentId, verdictId, round){
   btn.disabled=true;btn.textContent='Sending back...';
-  const verdict=decodeURIComponent(encodedVerdict);
+  const verdict=getDraft(verdictId);
   const card=btn.closest('.qa-card');
 
   // Replace card with "sending" state
@@ -1273,7 +1273,7 @@ async function sendRevision(btn, originAgentId, encodedVerdict, round){
   const revMsg=`Your previous output was reviewed by Monica (QA). Here is her feedback:\n\n${verdict}\n\nPlease revise your output to address all of Monica's notes. Produce the corrected version now.`;
 
   try {
-    const revised=await callAPI(revSys,[{role:'user',content:revMsg}],WEB_SEARCH_AGENTS.has(originAgentId));
+    const revised=await callAPI(revSys,[{role:'user',content:revMsg}],WEB_SEARCH_AGENTS.has(originAgentId),2500);
     revisionTyping.remove();
     setDone(originAgentId);
 
@@ -1342,9 +1342,9 @@ async function runAgentSilent(targetId, messages, proceedMsg) {
     for (const req of consultRequests) {
       const cag = A[req.agentId];
       if (!cag) continue;
-      const cSys = `${cag.sys}\n\nActive client: ${client}. You are being consulted internally. Give focused expert input. Never use em dashes.`;
+      const cSys = `${cag.sys}\n\nActive client: ${client}. You are being consulted internally. Answer directly from your own expertise right now. CRITICAL: Do NOT output a CREW_CONSULT line — you are being consulted, not the one consulting. Do not request input from anyone else. Just answer. Never use em dashes.`;
       try {
-        const r = await callAPI(cSys, [{role:'user', content:`${ag.n} needs your input on: ${req.question}`}], WEB_SEARCH_AGENTS.has(req.agentId), 600);
+        const r = await callAPI(cSys, [{role:'user', content:`${ag.n} needs your input on: ${req.question}`}], WEB_SEARCH_AGENTS.has(req.agentId), 1200);
         results.push(`${cag.n}:\n${r}`);
       } catch(e) {}
     }
