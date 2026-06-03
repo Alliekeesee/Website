@@ -524,7 +524,7 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
     </div>
     <ol class="rules-list">
       <li><strong>Tee Off:</strong> Take turns hitting the ball.</li>
-      <li><strong>Group Size &amp; Stroke Limit:</strong> Maximum 6 players. Stroke limit is <strong>6 shots per hole, per person</strong>.</li>
+      <li><strong>Group Size &amp; Stroke Limit:</strong> Maximum 8 players. Stroke limit is <strong>6 shots per hole, per person</strong>.</li>
       <li><strong>Out of Bounds:</strong> Place the ball back in play 3 inches from where it went out. <strong>+1 penalty stroke.</strong></li>
       <li><strong>Clubs:</strong> Never swing your club above knee level.</li>
       <li><strong>Safety:</strong> Use the walkways at all times. Do not walk on bricks. Do not run.</li>
@@ -648,7 +648,7 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
       </div>
     </div>
     <div class="mb20">
-      <div class="section-label">Players (up to 6) &nbsp;<span style="font-weight:600;color:var(--gray);text-transform:none;letter-spacing:0">Name required · Age optional</span></div>
+      <div class="section-label">Players (up to 8) &nbsp;<span style="font-weight:600;color:var(--gray);text-transform:none;letter-spacing:0">Name required · Age optional</span></div>
       <div class="photo-setup-callout">📷 Tap the camera circle next to each player to take or retake their photo. This is optional, but it makes the scorecard more fun.</div>
       <div class="player-list" id="player-list"></div>
       <button class="btn btn-outline btn-gray" onclick="addPlayer()" id="add-player-btn">+ Add Player</button>
@@ -879,7 +879,7 @@ function renderPlayers() {
       ${state.players.length > 1 ? `<button class="remove-player" onclick="removePlayer(${p.id})">×</button>` : ''}
     </div>
   `).join('');
-  addBtn.style.display = state.players.length >= 6 ? 'none' : 'flex';
+  addBtn.style.display = state.players.length >= 8 ? 'none' : 'flex';
 }
 
 function updatePlayerName(id, val) {
