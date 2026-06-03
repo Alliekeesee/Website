@@ -1189,12 +1189,9 @@ function changeScore(pid, hole, delta) {
   }
   if (prev === null) {
     state.scores[pid][hole] = 1;
-    const player = state.players.find(p => p.id === pid);
-    showHoleInOnePopup(player ? player.name : 'Someone', hole + 1);
   } else {
     state.scores[pid][hole] = Math.max(1, Math.min(STROKE_LIMIT, prev + delta));
   }
-  if (prev !== null && prev > 1 && state.scores[pid][hole] === 1) { const player = state.players.find(p => p.id === pid); showHoleInOnePopup(player ? player.name : 'Someone', hole + 1); }
   saveResumeState();
   renderScoringHole();
 }
@@ -1254,6 +1251,13 @@ function prevHole() { if (state.currentHole > 0) { state.currentHole--; renderSc
 function nextHole() {
   if (state.currentHole === 17) { finishRound(); return; }
   const leavingHole = state.currentHole;
+  // Check for hole-in-ones BEFORE advancing — only fires when the score is
+  // actually confirmed by moving on, not on every tap of the + button.
+  state.players.forEach(p => {
+    if (state.scores[p.id] && state.scores[p.id][leavingHole] === 1) {
+      showHoleInOnePopup(p.name || 'Someone', leavingHole + 1);
+    }
+  });
   state.currentHole++;
   renderScoringHole();
   if (leavingHole === 8 && !halfwayOfferShown) {
