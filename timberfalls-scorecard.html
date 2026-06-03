@@ -2433,6 +2433,11 @@ function playAgain() {
 function doPlayAgain() {
   clearResumeState();
   state = {course:null,players:[],scores:{},obFlags:{},currentHole:0,code:'',role:'host',myName:'',myId:null,gameCode:''};
+  halfwayOfferShown = false;
+  roundPhotoData = null;
+  roundPhotoOriginalData = null;
+  keepsakeCropConfirmed = false;
+  keepsakePhotoCrop = { zoom: 1, offsetX: 0, offsetY: 0 };
   initSetup();
   screenHistory = ['screen-home','screen-setup'];
   showScreen('screen-setup', false);
