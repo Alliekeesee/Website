@@ -2432,6 +2432,12 @@ function playAgain() {
 
 function doPlayAgain() {
   clearResumeState();
+  // Cancel any pending offer modals and remove existing ones
+  window.clearTimeout(window.__secondRoundOfferTimer);
+  const offerModal = document.getElementById('second-round-offer-modal');
+  if (offerModal) offerModal.remove();
+  const playAgainModal = document.getElementById('play-again-modal');
+  if (playAgainModal) playAgainModal.remove();
   state = {course:null,players:[],scores:{},obFlags:{},currentHole:0,code:'',role:'host',myName:'',myId:null,gameCode:''};
   halfwayOfferShown = false;
   roundPhotoData = null;
