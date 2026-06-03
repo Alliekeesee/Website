@@ -1708,20 +1708,8 @@ function drawKeepsakeTemplateOverlays(ctx, templateImg) {
   ctx.save();
   // Timber Falls logo
   drawKeepsakeTemplateRegion(ctx, templateImg, 378, 0, 324, 128);
-  // FINAL SCORES ribbon banner — clip to the ribbon shape first so the pointed
-  // corner triangles never get drawn (photo shows through those areas naturally).
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(362, 568);
-  ctx.lineTo(718, 568);
-  ctx.lineTo(758, 618);
-  ctx.lineTo(718, 668);
-  ctx.lineTo(362, 668);
-  ctx.lineTo(322, 618);
-  ctx.closePath();
-  ctx.clip();
+  // FINAL SCORES banner — drawn as a full rectangle (no pointed ends).
   drawKeepsakeTemplateRegion(ctx, templateImg, 322, 568, 436, 100);
-  ctx.restore();
   ctx.restore();
 }
 
@@ -1757,7 +1745,7 @@ function drawCourseAndDateValues(ctx, courseDisplay, dateStr) {
   }
 
   fitTextOnCanvas(ctx, dateStr, 250, 22, 12, '900');
-  ctx.fillText(dateStr, xCenter, 822);
+  ctx.fillText(dateStr, xCenter, 814);
 }
 
 async function renderKeepsakeCropPreview() {
@@ -1982,16 +1970,16 @@ async function createKeepsakeScorecardCanvas() {
 
   const worstHole = getWorstHoleWinner();
 
-  await drawStatText(485, 733, 145,
+  await drawStatText(485, 712, 145,
     fewest && fewest.p,
     fewest ? pName(fewest.p, 10) : 'N/A',
     fewest ? String(fewest.total) : '', '', red);
-  await drawStatText(710, 733, 150,
+  await drawStatText(710, 712, 150,
     aceWinner && aceWinner.count ? aceWinner.p : null,
     aceWinner && aceWinner.count ? `${pName(aceWinner.p, 8)} ${aceWinner.count}` : 'None',
     aceWinner && aceWinner.count ? holesLabel(aceWinner.holes) : '0 Hole-In-Ones',
     '', red);
-  await drawStatText(935, 733, 150,
+  await drawStatText(935, 712, 150,
     worstHole && worstHole.p,
     worstHole ? pName(worstHole.p, 10) : 'N/A',
     worstHole ? `Hole #${worstHole.hole}` : '',
