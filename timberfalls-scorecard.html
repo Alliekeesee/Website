@@ -2014,11 +2014,25 @@ async function createKeepsakeScorecardCanvas() {
       ctx.fillText('👑', 47, baseline + 1);
     }
     ctx.textAlign = 'center';
-    ctx.fillStyle = darkText;
     ctx.font = '800 14px Arial, sans-serif';
     for (let h=0; h<18; h++) {
-      const val = scores[h] ?? '';
-      ctx.fillText(String(val), firstHoleCenter + holeW*h, baseline);
+      const val = scores[h];
+      const cx = firstHoleCenter + holeW * h;
+      if (val === null || val === undefined) {
+        // Draw an X through the cell for skipped holes
+        const hw = holeW * 0.3, hh = 7;
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - hw, baseline - hh);
+        ctx.lineTo(cx + hw, baseline + hh - 14);
+        ctx.moveTo(cx + hw, baseline - hh);
+        ctx.lineTo(cx - hw, baseline + hh - 14);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = darkText;
+        ctx.fillText(String(val), cx, baseline);
+      }
     }
     ctx.fillStyle = red;
     ctx.font = '900 16px Arial, sans-serif';
