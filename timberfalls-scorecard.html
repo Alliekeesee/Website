@@ -1712,8 +1712,19 @@ function drawKeepsakeTemplateOverlays(ctx, templateImg) {
   ctx.save();
   // Timber Falls logo
   drawKeepsakeTemplateRegion(ctx, templateImg, 378, 0, 324, 128);
-  // FINAL SCORES banner — drawn as a full rectangle (no pointed ends).
-  drawKeepsakeTemplateRegion(ctx, templateImg, 322, 568, 436, 100);
+
+  // FINAL SCORES banner — full-width green rectangle at bottom of photo area
+  const bx = 30, by = 596, bw = 1020, bh = 58;
+  ctx.fillStyle = '#1e4d2b';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 34px "Bebas Neue", Arial, sans-serif';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('🌲  FINAL SCORES  🌲', bx + bw / 2, by + bh / 2 + 1);
+  ctx.letterSpacing = '0px';
+
   ctx.restore();
 }
 
@@ -1979,11 +1990,23 @@ async function createKeepsakeScorecardCanvas() {
   const winnerLabel = winners.length ? winners.map(w => pName(w.p, 10)).join(' & ') : 'N/A';
   const winnerScore = fewest ? String(fewest.total) : '';
   await drawStatText(485, 712, 145, winnerPhoto, winnerLabel, winnerScore, '', red);
+  // Split hole-in-one hole list across two lines when there are 3+ holes
+  let aceHoleLine1 = '', aceHoleLine2 = '';
+  if (aceWinner && aceWinner.count) {
+    const holeLabels = aceWinner.holes.map(h => 'Hole #' + h);
+    if (holeLabels.length <= 2) {
+      aceHoleLine1 = holeLabels.join(', ');
+    } else {
+      const mid = Math.ceil(holeLabels.length / 2);
+      aceHoleLine1 = holeLabels.slice(0, mid).join(', ');
+      aceHoleLine2 = holeLabels.slice(mid).join(', ');
+    }
+  }
   await drawStatText(710, 712, 150,
     aceWinner && aceWinner.count ? aceWinner.p : null,
     aceWinner && aceWinner.count ? `${pName(aceWinner.p, 8)} ${aceWinner.count}` : 'None',
-    aceWinner && aceWinner.count ? holesLabel(aceWinner.holes) : '0 Hole-In-Ones',
-    '', red);
+    aceWinner && aceWinner.count ? aceHoleLine1 : '0 Hole-In-Ones',
+    aceHoleLine2, red);
   await drawStatText(935, 712, 150,
     worstHole && worstHole.p,
     worstHole ? pName(worstHole.p, 10) : 'N/A',
