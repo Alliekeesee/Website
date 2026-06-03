@@ -1965,30 +1965,32 @@ async function createKeepsakeScorecardCanvas() {
   async function drawStatText(xCenter, yTop, width, p, name, value, sub, color){
     const img = await loadPlayerPhoto(p);
     const hasPhoto = !!img;
-    let textY = yTop + 34;
+    const circleSize = 60;
+    // With photo: circle centered at yTop+30, text starts below
+    // Without photo: vertically offset so content sits similarly in the box
+    let textY = hasPhoto ? yTop + circleSize + 14 : yTop + 28;
 
     // Only show a player's selfie when they actually selected one. No fake initials.
     if (hasPhoto) {
-      drawCirclePhoto(img, xCenter, yTop + 28, 50);
-      textY = yTop + 70;
+      drawCirclePhoto(img, xCenter, yTop + circleSize / 2, circleSize);
     }
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = color;
-    fitText((name || '').toUpperCase(), width, hasPhoto ? 20 : 23, 11, '900');
+    fitText((name || '').toUpperCase(), width, hasPhoto ? 22 : 26, 11, '900');
     ctx.fillText((name || '').toUpperCase(), xCenter, textY);
 
     if (value) {
       ctx.fillStyle = darkText;
-      fitText(String(value || '').toUpperCase(), width, hasPhoto ? 18 : 20, 10, '900');
-      ctx.fillText(String(value || '').toUpperCase(), xCenter, textY + 25);
+      fitText(String(value || '').toUpperCase(), width, hasPhoto ? 19 : 22, 10, '900');
+      ctx.fillText(String(value || '').toUpperCase(), xCenter, textY + 30);
     }
 
     if (sub) {
       ctx.fillStyle = darkText;
-      fitText(String(sub), width, hasPhoto ? 12 : 13, 9, '700');
-      ctx.fillText(String(sub), xCenter, textY + 45);
+      fitText(String(sub), width, hasPhoto ? 13 : 14, 9, '700');
+      ctx.fillText(String(sub), xCenter, textY + 52);
     }
   }
 
