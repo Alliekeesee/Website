@@ -666,7 +666,7 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
     <div class="progress-track"><div class="progress-fill" id="score-progress-fill"></div></div>
     <div class="progress-text" id="score-progress-text">1 / 18</div>
   </div>
-  <div class="halfway-banner" id="halfway-banner">🎢 Halfway deal unlocked: Skyscraper Thrill Ride, 2 for $40. Normally $28.50 per person.</div>
+  <div class="halfway-banner" id="halfway-banner" onclick="showHalfwayOffer()" style="cursor:pointer">🎢 Halfway deal unlocked: Skyscraper Thrill Ride, 2 for $40. Normally $28.50 per person. <span style="text-decoration:underline">Tap for details</span></div>
   <div class="hole-nav" id="hole-nav-dots"></div>
   <div id="hole-card-area"></div>
   <div class="hole-nav-btns">
@@ -742,7 +742,7 @@ table.scorecard .name-cell{text-align:left;font-weight:700;max-width:80px;overfl
 
 <script>
 // ---- CONSTANTS ----
-const COLORS = ['#1e4d2b','#c8941a','#1a5fa8','#b91c1c','#7c3aed','#0891b2'];
+const COLORS = ['#1e4d2b','#c8941a','#1a5fa8','#b91c1c','#7c3aed','#0891b2','#be185d','#15803d'];
 let _pid = Date.now(); // monotonic player ID counter — never collides even when called rapidly
 function nextPid() { return ++_pid; }
 // Par values from the physical scorecards on-site
@@ -847,7 +847,7 @@ function avatarHTML(p, size=34, fontSize=13) {
 
 // ---- PLAYER MANAGEMENT ----
 function addPlayer() {
-  if (state.players.length >= 6) { showToast('Max 6 players per the course rules'); return; }
+  if (state.players.length >= 8) { showToast('Max 8 players'); return; }
   const id = nextPid();
   state.players.push({id, name:'', color: COLORS[state.players.length], photo: null, age: null});
   renderPlayers();
@@ -1513,7 +1513,7 @@ function resetPhotoSection() {
 
       <label class="photo-consent-row" style="background:#f9f7f3;border-radius:10px;padding:12px;margin:14px 0;cursor:pointer">
         <input type="checkbox" id="social-consent" onchange="validateDownloadForm()">
-        <span class="photo-consent-text"><strong>I agree</strong> Timber Falls Adventure Park, Knuckleheads, and Booby Trap Escape Rooms may use my submitted photo in social media, websites, advertising, and other marketing materials. If unchecked, your photo may be stored with your submission but will be marked as not approved for marketing use.</span>
+        <span class="photo-consent-text"><strong>I agree</strong> Timber Falls Adventure Park, Knuckleheads, and Booby Trap Escape Rooms may use my submitted photo in social media, websites, advertising, and other marketing materials.</span>
       </label>
 
       <button class="btn btn-green mt12" id="submit-all-btn" onclick="submitAll()" disabled>🎟 Unlock My Coupons & Keepsakes</button>
@@ -1903,6 +1903,7 @@ async function createKeepsakeScorecardCanvas() {
     .map(row => ({p: row.p, count: getAceHoles(row.p.id).length, holes: getAceHoles(row.p.id)}))
     .sort((a,b)=>b.count-a.count || a.p.name.localeCompare(b.p.name))[0] || null;
   const fewest = ranked[0] || null;
+  const winners = fewest ? ranked.filter(r => r.total === fewest.total) : [];
   const obWinner = ranked
     .map(row => ({p: row.p, count: getObCount(row.p.id), holes: getObHoles(row.p.id)}))
     .sort((a,b)=>b.count-a.count || a.p.name.localeCompare(b.p.name))[0] || null;
@@ -1974,10 +1975,10 @@ async function createKeepsakeScorecardCanvas() {
 
   const worstHole = getWorstHoleWinner();
 
-  await drawStatText(485, 712, 145,
-    fewest && fewest.p,
-    fewest ? pName(fewest.p, 10) : 'N/A',
-    fewest ? String(fewest.total) : '', '', red);
+  const winnerPhoto = winners.length === 1 ? winners[0].p : null;
+  const winnerLabel = winners.length ? winners.map(w => pName(w.p, 10)).join(' & ') : 'N/A';
+  const winnerScore = fewest ? String(fewest.total) : '';
+  await drawStatText(485, 712, 145, winnerPhoto, winnerLabel, winnerScore, '', red);
   await drawStatText(710, 712, 150,
     aceWinner && aceWinner.count ? aceWinner.p : null,
     aceWinner && aceWinner.count ? `${pName(aceWinner.p, 8)} ${aceWinner.count}` : 'None',
@@ -1999,7 +2000,7 @@ async function createKeepsakeScorecardCanvas() {
   const totalCenterX = 1014;
   const baselineOffset = 21;
 
-  for (let r=0; r<6; r++) {
+  for (let r=0; r<8; r++) {
     const row = ranked[r];
     if (!row) continue;
     const y = firstRowTop + r * rowH;
