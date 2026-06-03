@@ -1445,7 +1445,7 @@ function completeFinishRound() {
   const icePopEl = document.getElementById('ice-pop-section');
   if (icePopEl) {
     const icePopDate = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
-    icePopEl.innerHTML = `<div class="ice-pop-card"><div class="ice-pop-card-title">Free Ice Pop For The Winner</div><div class="ice-pop-card-text">${winnerName} wins this game and gets a free ice pop. Valid only on ${icePopDate}. Limit 1 per group. Show this screen to staff.</div></div>`;
+    icePopEl.innerHTML = `<div class="ice-pop-card"><div class="ice-pop-card-title">🍧 Sweet Victory! Free Ice Pop for the Winner</div><div class="ice-pop-card-text">${winnerName} claimed the win and earned a FREE ice pop! 🍧<br><br>Valid on ${icePopDate} only. Limit one ice pop per group.<br>Show this screen to a staff member to redeem.</div></div>`;
   }
 
   // Achievements
