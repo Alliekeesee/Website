@@ -1705,35 +1705,23 @@ function drawKeepsakeTemplateRegion(ctx, templateImg, x, y, w, h) {
 }
 
 function drawKeepsakeTemplateOverlays(ctx, templateImg) {
-  // Reapply only the fixed template pieces that must sit above the guest photo.
-  // Photo stays behind these pieces, so the preview matches the final download.
   ctx.save();
-  // Timber Falls logo, cropped from the updated template.
+  // Timber Falls logo
   drawKeepsakeTemplateRegion(ctx, templateImg, 378, 0, 324, 128);
-  // FINAL SCORES banner, cropped from the updated template.
-  // After drawing it, cut the ribbon notches back out so the guest photo shows through.
-  drawKeepsakeTemplateRegion(ctx, templateImg, 322, 568, 436, 100);
-  cutFinalScoresRibbonNotches(ctx);
-  ctx.restore();
-}
-
-function cutFinalScoresRibbonNotches(ctx) {
-  // These transparent cutouts keep the end triangles from looking like random dark blocks.
-  // They reveal the photo underneath, matching the intended ribbon shape.
+  // FINAL SCORES ribbon banner — clip to the ribbon shape first so the pointed
+  // corner triangles never get drawn (photo shows through those areas naturally).
   ctx.save();
-  ctx.globalCompositeOperation = 'destination-out';
   ctx.beginPath();
-  // left inner notch
-  ctx.moveTo(322, 568);
-  ctx.lineTo(362, 618);
-  ctx.lineTo(322, 668);
+  ctx.moveTo(362, 568);
+  ctx.lineTo(718, 568);
+  ctx.lineTo(758, 618);
+  ctx.lineTo(718, 668);
+  ctx.lineTo(362, 668);
+  ctx.lineTo(322, 618);
   ctx.closePath();
-  // right inner notch
-  ctx.moveTo(758, 568);
-  ctx.lineTo(718, 618);
-  ctx.lineTo(758, 668);
-  ctx.closePath();
-  ctx.fill();
+  ctx.clip();
+  drawKeepsakeTemplateRegion(ctx, templateImg, 322, 568, 436, 100);
+  ctx.restore();
   ctx.restore();
 }
 
@@ -1745,9 +1733,8 @@ function drawCourseAndDateValues(ctx, courseDisplay, dateStr) {
   const course = String(courseDisplay || '').toUpperCase();
   const colorMatch = course.match(/^(.*)\s+(\((BLUE|RED|BLACK)\))$/);
   const maxWidth = 238;
+  const xCenter = 200; // horizontal center of the wood sign box
 
-  // Keep course text inside the upper half of the wood sign.
-  // The decorative divider line sits around y=753, so two-line names must stay above it.
   if (colorMatch || course.length > 18) {
     let line1 = colorMatch ? colorMatch[1].trim() : course;
     let line2 = colorMatch ? colorMatch[2].trim() : '';
@@ -1759,18 +1746,18 @@ function drawCourseAndDateValues(ctx, courseDisplay, dateStr) {
     }
 
     fitTextOnCanvas(ctx, line1, maxWidth, 20, 12, '900');
-    ctx.fillText(line1, 218, 720);
+    ctx.fillText(line1, xCenter, 738);
     if (line2) {
       fitTextOnCanvas(ctx, line2, maxWidth, 18, 11, '900');
-      ctx.fillText(line2, 218, 742);
+      ctx.fillText(line2, xCenter, 757);
     }
   } else {
     fitTextOnCanvas(ctx, course, maxWidth, 23, 14, '900');
-    ctx.fillText(course, 218, 732);
+    ctx.fillText(course, xCenter, 745);
   }
 
-  fitTextOnCanvas(ctx, dateStr, 250, 24, 12, '900');
-  ctx.fillText(dateStr, 218, 817);
+  fitTextOnCanvas(ctx, dateStr, 250, 22, 12, '900');
+  ctx.fillText(dateStr, xCenter, 822);
 }
 
 async function renderKeepsakeCropPreview() {
@@ -1965,12 +1952,11 @@ async function createKeepsakeScorecardCanvas() {
   async function drawStatText(xCenter, yTop, width, p, name, value, sub, color){
     const img = await loadPlayerPhoto(p);
     const hasPhoto = !!img;
-    const circleSize = 60;
-    // With photo: circle centered at yTop+30, text starts below
-    // Without photo: vertically offset so content sits similarly in the box
-    let textY = hasPhoto ? yTop + circleSize + 14 : yTop + 28;
+    const circleSize = 65;
+    // Place circle fully below the template's stat-box label band.
+    // Name sits 18px below the circle bottom; value 28px below name.
+    let textY = hasPhoto ? yTop + circleSize + 18 : yTop + 30;
 
-    // Only show a player's selfie when they actually selected one. No fake initials.
     if (hasPhoto) {
       drawCirclePhoto(img, xCenter, yTop + circleSize / 2, circleSize);
     }
@@ -1983,29 +1969,29 @@ async function createKeepsakeScorecardCanvas() {
 
     if (value) {
       ctx.fillStyle = darkText;
-      fitText(String(value || '').toUpperCase(), width, hasPhoto ? 19 : 22, 10, '900');
-      ctx.fillText(String(value || '').toUpperCase(), xCenter, textY + 30);
+      fitText(String(value || '').toUpperCase(), width, hasPhoto ? 20 : 22, 10, '900');
+      ctx.fillText(String(value || '').toUpperCase(), xCenter, textY + 28);
     }
 
     if (sub) {
       ctx.fillStyle = darkText;
       fitText(String(sub), width, hasPhoto ? 13 : 14, 9, '700');
-      ctx.fillText(String(sub), xCenter, textY + 52);
+      ctx.fillText(String(sub), xCenter, textY + 50);
     }
   }
 
   const worstHole = getWorstHoleWinner();
 
-  await drawStatText(515, 718, 145,
+  await drawStatText(485, 733, 145,
     fewest && fewest.p,
     fewest ? pName(fewest.p, 10) : 'N/A',
     fewest ? String(fewest.total) : '', '', red);
-  await drawStatText(719, 718, 150,
+  await drawStatText(710, 733, 150,
     aceWinner && aceWinner.count ? aceWinner.p : null,
     aceWinner && aceWinner.count ? `${pName(aceWinner.p, 8)} ${aceWinner.count}` : 'None',
     aceWinner && aceWinner.count ? holesLabel(aceWinner.holes) : '0 Hole-In-Ones',
     '', red);
-  await drawStatText(938, 718, 150,
+  await drawStatText(935, 733, 150,
     worstHole && worstHole.p,
     worstHole ? pName(worstHole.p, 10) : 'N/A',
     worstHole ? `Hole #${worstHole.hole}` : '',
@@ -2018,7 +2004,7 @@ async function createKeepsakeScorecardCanvas() {
   const playerNameX = 68;
   const firstHoleCenter = 227.5;
   const holeW = 42.55;
-  const totalCenterX = 1024;
+  const totalCenterX = 1014;
   const baselineOffset = 21;
 
   for (let r=0; r<6; r++) {
