@@ -1251,13 +1251,9 @@ function prevHole() { if (state.currentHole > 0) { state.currentHole--; renderSc
 function nextHole() {
   if (state.currentHole === 17) { finishRound(); return; }
   const leavingHole = state.currentHole;
-  // Check for hole-in-ones BEFORE advancing — only fires when the score is
-  // actually confirmed by moving on, not on every tap of the + button.
-  state.players.forEach(p => {
-    if (state.scores[p.id] && state.scores[p.id][leavingHole] === 1) {
-      showHoleInOnePopup(p.name || 'Someone', leavingHole + 1);
-    }
-  });
+  // Check for hole-in-ones BEFORE advancing — fires once with all names.
+  const aces = state.players.filter(p => state.scores[p.id] && state.scores[p.id][leavingHole] === 1);
+  if (aces.length) showHoleInOnePopup(aces.map(p => p.name || 'Someone'), leavingHole + 1);
   state.currentHole++;
   renderScoringHole();
   if (leavingHole === 8 && !halfwayOfferShown) {
@@ -1285,17 +1281,21 @@ function showHalfwayOffer() {
   document.body.appendChild(overlay);
 }
 
-function showHoleInOnePopup(playerName, holeNum) {
+function showHoleInOnePopup(playerNames, holeNum) {
   const existing = document.getElementById('hole-in-one-modal');
   if (existing) existing.remove();
+  const names = Array.isArray(playerNames) ? playerNames : [playerNames];
+  const multiple = names.length > 1;
+  const nameStr = names.length === 1 ? names[0]
+    : names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
   const overlay = document.createElement('div');
   overlay.id = 'hole-in-one-modal';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:912;display:flex;align-items:center;justify-content:center;padding:18px';
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:18px;padding:22px;max-width:340px;width:100%;text-align:center;border:3px solid var(--gold);box-shadow:0 10px 40px rgba(0,0,0,.25)">
       <div style="font-size:46px;margin-bottom:8px">🏆</div>
-      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--green);letter-spacing:1px;line-height:1;margin-bottom:8px">Hole In One!</h3>
-      <p style="font-size:15px;font-weight:900;color:var(--text);line-height:1.45;margin-bottom:16px">${playerName} nailed Hole ${holeNum}.</p>
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--green);letter-spacing:1px;line-height:1;margin-bottom:8px">Hole In One${multiple ? 's' : ''}!</h3>
+      <p style="font-size:15px;font-weight:900;color:var(--text);line-height:1.45;margin-bottom:16px">${nameStr} ${multiple ? 'all' : ''} nailed Hole ${holeNum}!</p>
       <button class="btn btn-green" onclick="document.getElementById('hole-in-one-modal').remove()">Awesome!</button>
     </div>`;
   document.body.appendChild(overlay);
