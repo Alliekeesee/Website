@@ -778,15 +778,6 @@ let state = {
 const LS_PREFIX = 'tf-game-';
 function saveGame(code, data) { try { localStorage.setItem(LS_PREFIX + code, JSON.stringify(data)); } catch(e) {} }
 function loadGame(code) { try { return JSON.parse(localStorage.getItem(LS_PREFIX + code)); } catch(e) { return null; } }
-function cleanOldGames() {
-  try {
-    const cutoff = Date.now() - 6 * 60 * 60 * 1000;
-    Object.keys(localStorage).filter(k => k.startsWith(LS_PREFIX)).forEach(k => {
-      const d = JSON.parse(localStorage.getItem(k));
-      if (d && d.createdAt < cutoff) localStorage.removeItem(k);
-    });
-  } catch(e) {}
-}
 
 // ---- NAVIGATION ----
 let screenHistory = ['screen-home'];
@@ -817,9 +808,7 @@ function updateHeader(screenId) {
   backBtn.classList.toggle('visible', !noBack.includes(screenId));
   const labels = {
     'screen-home':'Scorecard','screen-setup':'New Game Setup',
-    'screen-join':'Join a Group','screen-waiting':'Share Your Code',
-    'screen-joined-wait':'Waiting for Host',
-    'screen-scoring': state.course ? COURSE_NAMES[state.course] : 'Scoring',
+'screen-scoring': state.course ? COURSE_NAMES[state.course] : 'Scoring',
     'screen-scorecard':'Scorecard','screen-results':'Results',
     'screen-leaderboard':'Weekly Leaderboard',
   };
@@ -1004,88 +993,9 @@ function startRound() {
   beginScoring();
 }
 
-function onHostStorageEvent(e) {
-  if (e.key !== LS_PREFIX + state.code) return;
-  const data = loadGame(state.code);
-  if (!data) return;
-  data.players.forEach(p => {
-    if (!state.players.find(sp => sp.id === p.id)) {
-      state.players.push({...p, photo: null});
-      state.scores[p.id] = new Array(18).fill(null);
-      state.obFlags[p.id] = new Array(18).fill(false);
-      showToast('👋 ' + p.name + ' joined!');
-    }
-  });
-  renderJoinedList();
-}
-
-function cancelRound() {
-  window.removeEventListener('storage', onHostStorageEvent);
-  try { localStorage.removeItem(LS_PREFIX + state.code); } catch(e) {}
-  goBack();
-}
-
-function renderJoinedList() {
-  const list = document.getElementById('joined-list');
-  list.innerHTML = state.players.map((p,i) => `
-    <div class="joined-row">
-      ${avatarHTML(p, 30, 12)}
-      <span style="font-size:14px;font-weight:700;flex:1">${p.name}</span>
-      ${i===0 ? '<span class="joined-you">HOST</span>' : '<span style="font-size:11px;color:var(--gray);font-weight:600">✓ ready</span>'}
-    </div>
-  `).join('');
-}
-
-// ---- JOIN GROUP ----
-function joinGroup() {
-  const name = document.getElementById('joiner-name').value.trim();
-  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
-  if (!name) { showToast('Enter your name'); return; }
-  if (code.length !== 4) { showToast('Enter a 4-letter code'); return; }
-
-  const gameData = loadGame(code);
-  if (!gameData) { showToast('Code not found — check with your host'); return; }
-  if (gameData.started) { showToast('That game has already started'); return; }
-
-  const newPlayer = {id: Date.now(), name, color: COLORS[gameData.players.length % COLORS.length], photo: null};
-  gameData.players.push(newPlayer);
-  saveGame(code, gameData);
-
-  state.myName = name;
-  state.myId = newPlayer.id;
-  state.gameCode = code;
-  state.course = gameData.course;
-  state.role = 'viewer';
-
-  document.getElementById('joiner-display-code').textContent = code;
-  showScreen('screen-joined-wait');
-  window.addEventListener('storage', onJoinerStorageEvent);
-}
-
-function onJoinerStorageEvent(e) {
-  if (e.key !== LS_PREFIX + state.gameCode) return;
-  const data = loadGame(state.gameCode);
-  if (!data || !data.started) return;
-  window.removeEventListener('storage', onJoinerStorageEvent);
-  state.players = data.players.map(p => ({...p, photo: null}));
-  state.scores = {};
-  state.obFlags = {};
-  state.players.forEach(p => {
-    state.scores[p.id] = new Array(18).fill(null);
-    state.obFlags[p.id] = new Array(18).fill(false);
-  });
-  beginScoring();
-}
 
 // ---- BEGIN SCORING ----
 function beginScoring() {
-  if (state.role === 'host') {
-    window.removeEventListener('storage', onHostStorageEvent);
-    const gameData = loadGame(state.code) || {};
-    gameData.started = true;
-    gameData.players = state.players.map(p => ({...p, photo: null}));
-    saveGame(state.code, gameData);
-  }
   // Display course name at top
   const courseName = COURSE_NAMES[state.course] || 'Unknown Course';
   document.getElementById('course-name-display').textContent = courseName + ' Course';
@@ -2106,11 +2016,6 @@ async function createSimpleKeepsakeFallbackCanvas() {
   return canvas;
 }
 
-async function downloadScorecard() {
-  if (!(roundPhotoOriginalData || roundPhotoData)) { showToast('Add a photo first'); return; }
-  const canvas = await createKeepsakeScorecardCanvas();
-  triggerDownload(canvas, 'Timber-Falls-Scorecard-Keepsake-4x5.png');
-}
 
 async function cropCouponToCanvas() {
   const img = await loadImage(TIMBER_COUPON_SHEET);
@@ -2259,7 +2164,7 @@ function closeDownloadPackModal() {
   document.getElementById('download-pack-overlay').classList.remove('open');
 }
 
-function submitAll() {
+async function submitAll() {
   const phoneInput = document.getElementById('phone-input');
   const marketingConsent = document.getElementById('marketing-consent');
   const socialConsent = document.getElementById('social-consent');
@@ -2297,6 +2202,16 @@ function submitAll() {
   formData.append('date', dateStr);
   formData.append('photo-submitted', 'Yes');
   formData.append('photo', dataURLToBlob(roundPhotoOriginalData || roundPhotoData), 'timber-falls-photo.jpg');
+
+  try {
+    const keepsakeCanvas = await createKeepsakeScorecardCanvas();
+    await new Promise(resolve => keepsakeCanvas.toBlob(blob => {
+      if (blob) formData.append('keepsake', blob, 'timber-falls-keepsake.png');
+      resolve();
+    }, 'image/png'));
+  } catch(e) {
+    console.warn('Keepsake generation failed, submitting without it:', e.message);
+  }
 
   fetch('/', { method: 'POST', body: formData })
     .then(res => {
@@ -2657,22 +2572,6 @@ function getWeekKey(ts) {
   return mon.toISOString().slice(0, 10);
 }
 
-function isSundayPastMidnight() {
-  const now = new Date();
-  // Sunday = 0, after 23:59 we clear
-  return now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 59;
-}
-
-function purgeSundayScores() {
-  // Remove all scores from the current week after Sunday 11:59pm
-  try {
-    const now = new Date();
-    if (now.getDay() !== 0) return; // only run on Sunday
-    const cutoffHour = now.getHours() * 60 + now.getMinutes();
-    if (cutoffHour < 23 * 60 + 59) return; // only after 11:59pm
-    localStorage.removeItem(LS_LB);
-  } catch(e) {}
-}
 
 function weekDisplayLabel(key) {
   const mon = new Date(key + 'T00:00:00');
@@ -2898,7 +2797,6 @@ initSupabase(); // Initialize Supabase asynchronously
 initSetup();
 checkResumeGame();
 updateLbHomeSubtitle();
-purgeSundayScores();
 purgeOldScoresFromSupabase(); // Also purge from backend
 
 // Auto-open rules on first load
@@ -2919,6 +2817,7 @@ openRules();
   <input name="scores">
   <input name="date">
   <input name="photo" type="file">
+  <input name="keepsake" type="file">
 </form>
 <form name="tf-photo-submission" method="POST" data-netlify="true" netlify netlify-honeypot="bot-field" hidden>
   <input type="hidden" name="form-name" value="tf-photo-submission">
